@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      menu_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: number
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          id: number
+          items: Json
+          status: string | null
+          table_number: number
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          items: Json
+          status?: string | null
+          table_number: number
+          total: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          items?: Json
+          status?: string | null
+          table_number?: number
+          total?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          created_at: string | null
+          customer_name: string
+          date: string
+          google_event_id: string | null
+          id: number
+          people: number
+          phone: string | null
+          status: string | null
+          table_number: number | null
+          time: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name: string
+          date: string
+          google_event_id?: string | null
+          id?: number
+          people: number
+          phone?: string | null
+          status?: string | null
+          table_number?: number | null
+          time: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string
+          date?: string
+          google_event_id?: string | null
+          id?: number
+          people?: number
+          phone?: string | null
+          status?: string | null
+          table_number?: number | null
+          time?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       Vinos: {
         Row: {
           Country: string | null
