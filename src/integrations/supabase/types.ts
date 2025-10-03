@@ -14,61 +14,85 @@ export type Database = {
   }
   public: {
     Tables: {
-      menu_items: {
+      menu: {
         Row: {
-          category: string | null
+          categoria: string | null
           created_at: string | null
-          description: string | null
+          Gluten: string | null
           id: number
-          name: string
-          price: number
+          ingredientes: string | null
+          Lactosa: string | null
+          Marisco: string | null
+          nombre: string | null
+          precio: string | null
+          stock: string | null
           updated_at: string | null
+          Vegano: string | null
+          Vegetariano: string | null
         }
         Insert: {
-          category?: string | null
+          categoria?: string | null
           created_at?: string | null
-          description?: string | null
-          id?: number
-          name: string
-          price: number
+          Gluten?: string | null
+          id: number
+          ingredientes?: string | null
+          Lactosa?: string | null
+          Marisco?: string | null
+          nombre?: string | null
+          precio?: string | null
+          stock?: string | null
           updated_at?: string | null
+          Vegano?: string | null
+          Vegetariano?: string | null
         }
         Update: {
-          category?: string | null
+          categoria?: string | null
           created_at?: string | null
-          description?: string | null
+          Gluten?: string | null
           id?: number
-          name?: string
-          price?: number
+          ingredientes?: string | null
+          Lactosa?: string | null
+          Marisco?: string | null
+          nombre?: string | null
+          precio?: string | null
+          stock?: string | null
           updated_at?: string | null
+          Vegano?: string | null
+          Vegetariano?: string | null
         }
         Relationships: []
       }
       orders: {
         Row: {
           created_at: string | null
+          direccion: string
           id: number
           items: Json
+          nombre: string
           status: string | null
-          table_number: number
+          telefono: string
           total: number
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          direccion: string
           id?: number
           items: Json
+          nombre: string
           status?: string | null
-          table_number: number
+          telefono: string
           total: number
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          direccion?: string
           id?: number
           items?: Json
+          nombre?: string
           status?: string | null
-          table_number?: number
+          telefono?: string
           total?: number
           updated_at?: string | null
         }
@@ -81,6 +105,7 @@ export type Database = {
           date: string
           google_event_id: string | null
           id: number
+          observations: string | null
           people: number
           phone: string | null
           status: string | null
@@ -94,6 +119,7 @@ export type Database = {
           date: string
           google_event_id?: string | null
           id?: number
+          observations?: string | null
           people: number
           phone?: string | null
           status?: string | null
@@ -107,6 +133,7 @@ export type Database = {
           date?: string
           google_event_id?: string | null
           id?: number
+          observations?: string | null
           people?: number
           phone?: string | null
           status?: string | null
@@ -116,57 +143,115 @@ export type Database = {
         }
         Relationships: []
       }
-      Vinos: {
-        Row: {
-          Country: string | null
-          County: string | null
-          Designation: string | null
-          Id: string
-          Points: number | null
-          Price: number | null
-          Province: string | null
-          Title: string | null
-          Variety: string | null
-          Vintage: number | null
-          Winery: string | null
-        }
-        Insert: {
-          Country?: string | null
-          County?: string | null
-          Designation?: string | null
-          Id: string
-          Points?: number | null
-          Price?: number | null
-          Province?: string | null
-          Title?: string | null
-          Variety?: string | null
-          Vintage?: number | null
-          Winery?: string | null
-        }
-        Update: {
-          Country?: string | null
-          County?: string | null
-          Designation?: string | null
-          Id?: string
-          Points?: number | null
-          Price?: number | null
-          Province?: string | null
-          Title?: string | null
-          Variety?: string | null
-          Vintage?: number | null
-          Winery?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      match_documents: {
+        Args: { filter?: Json; match_count?: number; query_embedding: string }
+        Returns: {
+          content: string
+          id: number
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      estado_plato: "disponible" | "agotado" | "fuera_de_temporada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -293,6 +378,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      estado_plato: ["disponible", "agotado", "fuera_de_temporada"],
+    },
   },
 } as const
