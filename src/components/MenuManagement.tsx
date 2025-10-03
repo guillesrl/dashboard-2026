@@ -41,15 +41,15 @@ export function MenuManagement() {
   });
 
   const categories = [
-    { value: "entrada", label: "Entrada", color: "bg-blue-500 text-white hover:bg-blue-600" },
-    { value: "principal", label: "Plato Principal", color: "bg-green-500 text-white hover:bg-green-600" },
-    { value: "postre", label: "Postre", color: "bg-pink-500 text-white hover:bg-pink-600" },
-    { value: "bebida", label: "Bebida", color: "bg-amber-500 text-white hover:bg-amber-600" }
+    { value: "entrada", label: "Entrada", color: "bg-[hsl(var(--category-entrada))] text-[hsl(var(--category-entrada-foreground))]" },
+    { value: "principal", label: "Plato Principal", color: "bg-[hsl(var(--category-principal))] text-[hsl(var(--category-principal-foreground))]" },
+    { value: "postre", label: "Postre", color: "bg-[hsl(var(--category-postre))] text-[hsl(var(--category-postre-foreground))]" },
+    { value: "bebida", label: "Bebida", color: "bg-[hsl(var(--category-bebida))] text-[hsl(var(--category-bebida-foreground))]" }
   ];
 
   const getCategoryBadge = (categoria: string | null) => {
     const cat = categories.find(c => c.value === categoria);
-    return cat || { label: categoria, color: "bg-gray-500 text-white" };
+    return cat || { label: categoria, color: "bg-muted text-muted-foreground" };
   };
 
   useEffect(() => {
