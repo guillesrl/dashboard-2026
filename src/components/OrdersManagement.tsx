@@ -367,12 +367,16 @@ export function OrdersManagement() {
                   <TableCell>{order.telefono}</TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {order.items.map((item, idx) => (
-                        <div key={idx}>{item.quantity}x {item.name}</div>
-                      ))}
+                      {Array.isArray(order.items) ? (
+                        order.items.map((item: any, idx: number) => (
+                          <div key={idx}>{item.quantity}x {item.name}</div>
+                        ))
+                      ) : (
+                        <div>Items no disponibles</div>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>${order.total.toFixed(2)}</TableCell>
+                  <TableCell>${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'}</TableCell>
                   <TableCell>
                     <Badge className={`${statusOptions.find(s => s.value === order.status)?.color}`}>
                       <span className="flex items-center gap-1">
