@@ -13,12 +13,18 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 
 interface MenuItem {
   id: number;
-  name: string;
-  price: number;
-  category: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
+  nombre: string | null;
+  precio: string | null;
+  categoria: string | null;
+  ingredientes: string | null;
+  stock: string | null;
+  Gluten: string | null;
+  Vegetariano: string | null;
+  Vegano: string | null;
+  Lactosa: string | null;
+  Marisco: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export function MenuManagement() {
@@ -27,10 +33,10 @@ export function MenuManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    category: "entrada",
-    description: ""
+    nombre: "",
+    precio: "",
+    categoria: "entrada",
+    ingredientes: ""
   });
 
   const categories = [
@@ -47,10 +53,10 @@ export function MenuManagement() {
   const fetchMenuItems = async () => {
     try {
       const { data, error } = await supabase
-        .from('menu_items')
+        .from('menu')
         .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .order('categoria', { ascending: true })
+        .order('nombre', { ascending: true });
 
       if (error) throw error;
       setMenuItems(data || []);
@@ -70,15 +76,15 @@ export function MenuManagement() {
     
     try {
       const itemData = {
-        name: formData.name,
-        price: parseFloat(formData.price),
-        category: formData.category,
-        description: formData.description
+        nombre: formData.nombre,
+        precio: formData.precio,
+        categoria: formData.categoria,
+        ingredientes: formData.ingredientes
       };
 
       if (editingItem) {
         const { error } = await supabase
-          .from('menu_items')
+          .from('menu')
           .update(itemData)
           .eq('id', editingItem.id);
 
@@ -90,8 +96,8 @@ export function MenuManagement() {
         });
       } else {
         const { error } = await supabase
-          .from('menu_items')
-          .insert([itemData]);
+          .from('menu')
+          .insert([itemData] as any);
 
         if (error) throw error;
         
@@ -116,10 +122,10 @@ export function MenuManagement() {
   const handleEdit = (item: MenuItem) => {
     setEditingItem(item);
     setFormData({
-      name: item.name,
-      price: item.price.toString(),
-      category: item.category,
-      description: item.description || ""
+      nombre: item.nombre || "",
+      precio: item.precio || "",
+      categoria: item.categoria || "entrada",
+      ingredientes: item.ingredientes || ""
     });
     setDialogOpen(true);
   };
@@ -129,7 +135,7 @@ export function MenuManagement() {
 
     try {
       const { error } = await supabase
-        .from('menu_items')
+        .from('menu')
         .delete()
         .eq('id', id);
 
@@ -151,10 +157,10 @@ export function MenuManagement() {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      price: "",
-      category: "entrada",
-      description: ""
+      nombre: "",
+      precio: "",
+      categoria: "entrada",
+      ingredientes: ""
     });
     setEditingItem(null);
   };
@@ -190,30 +196,29 @@ export function MenuManagement() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Nombre</Label>
+                  <Label htmlFor="nombre">Nombre</Label>
                   <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    id="nombre"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                     required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="price">Precio ($)</Label>
+                    <Label htmlFor="precio">Precio ($)</Label>
                     <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      id="precio"
+                      type="text"
+                      value={formData.precio}
+                      onChange={(e) => setFormData({...formData, precio: e.target.value})}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category">Categoría</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                      <SelectTrigger id="category">
+                    <Label htmlFor="categoria">Categoría</Label>
+                    <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
+                      <SelectTrigger id="categoria">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -227,11 +232,11 @@ export function MenuManagement() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="description">Descripción</Label>
+                  <Label htmlFor="ingredientes">Ingredientes</Label>
                   <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    id="ingredientes"
+                    value={formData.ingredientes}
+                    onChange={(e) => setFormData({...formData, ingredientes: e.target.value})}
                     rows={3}
                   />
                 </div>
@@ -269,12 +274,12 @@ export function MenuManagement() {
             ) : (
               menuItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-medium">{item.nombre}</TableCell>
                   <TableCell>
-                    {categories.find(c => c.value === item.category)?.label || item.category}
+                    {categories.find(c => c.value === item.categoria)?.label || item.categoria}
                   </TableCell>
-                  <TableCell>${item.price.toFixed(2)}</TableCell>
-                  <TableCell className="max-w-[300px] truncate">{item.description}</TableCell>
+                  <TableCell>${item.precio}</TableCell>
+                  <TableCell className="max-w-[300px] truncate">{item.ingredientes}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button

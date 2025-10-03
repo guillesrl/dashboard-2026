@@ -19,12 +19,14 @@ interface OrderItem {
 
 interface Order {
   id: number;
-  table_number: number;
-  items: any; // JSONB from database
+  nombre: string;
+  telefono: string;
+  direccion: string;
+  items: any;
   total: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export function OrdersManagement() {
@@ -33,7 +35,9 @@ export function OrdersManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    table_number: "",
+    customer_name: "",
+    phone: "",
+    address: "",
     items: [] as OrderItem[]
   });
   const [selectedItem, setSelectedItem] = useState("");
@@ -75,9 +79,9 @@ export function OrdersManagement() {
   const fetchMenuItems = async () => {
     try {
       const { data, error } = await supabase
-        .from('menu_items')
+        .from('menu')
         .select('*')
-        .order('name');
+        .order('nombre');
 
       if (error) throw error;
       setMenuItems(data || []);
@@ -93,9 +97,9 @@ export function OrdersManagement() {
     if (!menuItem) return;
 
     const newItem: OrderItem = {
-      name: menuItem.name,
+      name: menuItem.nombre || "",
       quantity: parseInt(quantity),
-      price: menuItem.price
+      price: parseFloat(menuItem.precio || "0")
     };
 
     setFormData({
@@ -131,10 +135,12 @@ export function OrdersManagement() {
 
     try {
       const orderData = {
-        table_number: parseInt(formData.table_number),
-        items: formData.items as any, // Cast to any for JSONB
+        nombre: formData.customer_name,
+        telefono: formData.phone,
+        direccion: formData.address,
+        items: formData.items as any,
         total: calculateTotal(),
-        status: 'pending'
+        status: 'pendiente'
       };
 
       const { error } = await supabase
@@ -185,7 +191,9 @@ export function OrdersManagement() {
 
   const resetForm = () => {
     setFormData({
-      table_number: "",
+      customer_name: "",
+      phone: "",
+      address: "",
       items: []
     });
     setSelectedItem("");
@@ -229,17 +237,36 @@ export function OrdersManagement() {
               <DialogHeader>
                 <DialogTitle>Nueva Orden</DialogTitle>
                 <DialogDescription>
-                  Crea una nueva orden para una mesa
+                  Crea una nueva orden de delivery
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="customer_name">Nombre del Cliente</Label>
+                    <Input
+                      id="customer_name"
+                      value={formData.customer_name}
+                      onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
                 <div>
-                  <Label htmlFor="table">Número de Mesa</Label>
+                  <Label htmlFor="address">Dirección</Label>
                   <Input
-                    id="table"
-                    type="number"
-                    value={formData.table_number}
-                    onChange={(e) => setFormData({...formData, table_number: e.target.value})}
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
                     required
                   />
                 </div>
@@ -254,7 +281,7 @@ export function OrdersManagement() {
                       <SelectContent>
                         {menuItems.map(item => (
                           <SelectItem key={item.id} value={item.id.toString()}>
-                            {item.name} - ${item.price}
+                            {item.nombre} - ${item.precio}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -317,7 +344,8 @@ export function OrdersManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mesa</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Teléfono</TableHead>
               <TableHead>Items</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
@@ -328,14 +356,15 @@ export function OrdersManagement() {
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay órdenes registradas
                 </TableCell>
               </TableRow>
             ) : (
               orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">Mesa {order.table_number}</TableCell>
+                  <TableCell className="font-medium">{order.nombre}</TableCell>
+                  <TableCell>{order.telefono}</TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {order.items.map((item, idx) => (
