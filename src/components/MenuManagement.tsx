@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface MenuItem {
   id: number;
@@ -40,11 +41,16 @@ export function MenuManagement() {
   });
 
   const categories = [
-    { value: "entrada", label: "Entrada" },
-    { value: "principal", label: "Plato Principal" },
-    { value: "postre", label: "Postre" },
-    { value: "bebida", label: "Bebida" }
+    { value: "entrada", label: "Entrada", color: "bg-blue-500 text-white hover:bg-blue-600" },
+    { value: "principal", label: "Plato Principal", color: "bg-green-500 text-white hover:bg-green-600" },
+    { value: "postre", label: "Postre", color: "bg-pink-500 text-white hover:bg-pink-600" },
+    { value: "bebida", label: "Bebida", color: "bg-amber-500 text-white hover:bg-amber-600" }
   ];
+
+  const getCategoryBadge = (categoria: string | null) => {
+    const cat = categories.find(c => c.value === categoria);
+    return cat || { label: categoria, color: "bg-gray-500 text-white" };
+  };
 
   useEffect(() => {
     fetchMenuItems();
@@ -58,7 +64,9 @@ export function MenuManagement() {
         .order('id', { ascending: true });
 
       if (error) throw error;
-      setMenuItems(data || []);
+      // Filtrar items sin precio
+      const itemsWithPrice = (data || []).filter(item => item.precio && item.precio.trim() !== '');
+      setMenuItems(itemsWithPrice);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -271,34 +279,39 @@ export function MenuManagement() {
                 </TableCell>
               </TableRow>
             ) : (
-              menuItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.nombre}</TableCell>
-                  <TableCell>
-                    {categories.find(c => c.value === item.categoria)?.label || item.categoria}
-                  </TableCell>
-                  <TableCell>${item.precio}</TableCell>
-                  <TableCell className="max-w-[300px] truncate">{item.ingredientes}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              menuItems.map((item) => {
+                const categoryBadge = getCategoryBadge(item.categoria);
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.nombre}</TableCell>
+                    <TableCell>
+                      <Badge className={categoryBadge.color}>
+                        {categoryBadge.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>${item.precio}</TableCell>
+                    <TableCell className="max-w-[300px] truncate">{item.ingredientes}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              }))
             )}
           </TableBody>
         </Table>
