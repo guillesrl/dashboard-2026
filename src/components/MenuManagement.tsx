@@ -311,7 +311,7 @@ export function MenuManagement() {
                     </TableCell>
                   </TableRow>
                 );
-              }))
+              })
             )}
           </TableBody>
         </Table>
