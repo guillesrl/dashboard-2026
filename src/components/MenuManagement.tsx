@@ -55,8 +55,7 @@ export function MenuManagement() {
       const { data, error } = await supabase
         .from('menu')
         .select('*')
-        .order('categoria', { ascending: true })
-        .order('nombre', { ascending: true });
+        .order('id', { ascending: true });
 
       if (error) throw error;
       setMenuItems(data || []);
