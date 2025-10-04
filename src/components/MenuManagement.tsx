@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,16 +41,49 @@ export function MenuManagement() {
     ingredientes: ""
   });
 
-  const categories = [
-    { value: "entrada", label: "Entrada", color: "bg-[hsl(var(--category-entrada))] text-[hsl(var(--category-entrada-foreground))]" },
-    { value: "principal", label: "Plato Principal", color: "bg-[hsl(var(--category-principal))] text-[hsl(var(--category-principal-foreground))]" },
-    { value: "postre", label: "Postre", color: "bg-[hsl(var(--category-postre))] text-[hsl(var(--category-postre-foreground))]" },
-    { value: "bebida", label: "Bebida", color: "bg-[hsl(var(--category-bebida))] text-[hsl(var(--category-bebida-foreground))]" }
-  ];
-
   const getCategoryBadge = (categoria: string | null) => {
-    const cat = categories.find(c => c.value === categoria);
-    return cat || { label: categoria, color: "bg-muted text-muted-foreground" };
+    // Debug: Log the raw category value
+    console.log('Raw category value:', categoria);
+    
+    // Normalize the category by converting to lowercase and trimming whitespace
+    const normalizedCategoria = categoria ? String(categoria).toLowerCase().trim() : '';
+    console.log('Normalized category:', normalizedCategoria);
+    
+    const categoryStyles = {
+      entrantes: 'bg-green-100 text-green-800 border-green-200',
+      pescados: 'bg-blue-100 text-blue-800 border-blue-200',
+      pastas: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      carnes: 'bg-red-100 text-red-800 border-red-200',
+      postres: 'bg-purple-100 text-purple-800 border-purple-200',
+      default: 'bg-gray-100 text-gray-800 border-gray-200'
+    };
+
+    // Map the normalized category to its display name
+    const categoryMap: Record<string, {key: keyof typeof categoryStyles, label: string}> = {
+      'entrante': { key: 'entrantes', label: 'Entrantes' },
+      'entrantes': { key: 'entrantes', label: 'Entrantes' },
+      'pescado': { key: 'pescados', label: 'Pescados' },
+      'pescados': { key: 'pescados', label: 'Pescados' },
+      'pasta': { key: 'pastas', label: 'Pastas' },
+      'pastas': { key: 'pastas', label: 'Pastas' },
+      'carne': { key: 'carnes', label: 'Carnes' },
+      'carnes': { key: 'carnes', label: 'Carnes' },
+      'postre': { key: 'postres', label: 'Postres' },
+      'postres': { key: 'postres', label: 'Postres' }
+    };
+    
+    // Find the matching category or use default
+    const matchedCategory = categoryMap[normalizedCategoria] || { key: 'default', label: 'Otro' };
+    
+    console.log('Matched category:', matchedCategory);
+    
+    const { key, label } = matchedCategory;
+
+    return (
+      <Badge variant="outline" className={`${categoryStyles[key]} capitalize`}>
+        {label}
+      </Badge>
+    );
   };
 
   useEffect(() => {
@@ -224,16 +258,19 @@ export function MenuManagement() {
                   </div>
                   <div>
                     <Label htmlFor="categoria">Categoría</Label>
-                    <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
-                      <SelectTrigger id="categoria">
-                        <SelectValue />
+                    <Select
+                      value={formData.categoria}
+                      onValueChange={(value) => setFormData({...formData, categoria: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="entrantes">Entrantes</SelectItem>
+                        <SelectItem value="pescados">Pescados</SelectItem>
+                        <SelectItem value="pastas">Pastas</SelectItem>
+                        <SelectItem value="carnes">Carnes</SelectItem>
+                        <SelectItem value="postres">Postres</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -285,9 +322,8 @@ export function MenuManagement() {
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.nombre}</TableCell>
                     <TableCell>
-                      <Badge className={categoryBadge.color}>
-                        {categoryBadge.label}
-                      </Badge>
+                       {/* spam de categorias menu */}
+                      {categoryBadge}
                     </TableCell>
                     <TableCell>${item.precio}</TableCell>
                     <TableCell className="max-w-[300px] truncate">{item.ingredientes}</TableCell>
