@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface MenuItem {
@@ -61,15 +61,10 @@ export function MenuManagement() {
     // Map the normalized category to its display name
     const categoryMap: Record<string, {key: keyof typeof categoryStyles, label: string}> = {
       'entrante': { key: 'entrantes', label: 'Entrantes' },
-      'entrantes': { key: 'entrantes', label: 'Entrantes' },
       'pescado': { key: 'pescados', label: 'Pescados' },
-      'pescados': { key: 'pescados', label: 'Pescados' },
       'pasta': { key: 'pastas', label: 'Pastas' },
-      'pastas': { key: 'pastas', label: 'Pastas' },
       'carne': { key: 'carnes', label: 'Carnes' },
-      'carnes': { key: 'carnes', label: 'Carnes' },
       'postre': { key: 'postres', label: 'Postres' },
-      'postres': { key: 'postres', label: 'Postres' }
     };
     
     // Find the matching category or use default
@@ -319,8 +314,15 @@ export function MenuManagement() {
               menuItems.map((item) => {
                 const categoryBadge = getCategoryBadge(item.categoria);
                 return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.nombre}</TableCell>
+                  <TableRow key={item.id}> {/* comment Cambia el texto a Rojo si el stock es menor a 1 */}
+                    <TableCell className={`font-medium ${item.stock && parseInt(item.stock) < 1 ? 'text-red-500' : ''}`}>
+                      <div className="flex items-center gap-2">
+                        {item.nombre}
+                        {item.stock && parseInt(item.stock) < 1 && (
+                          <X className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                        {/* spam de categorias menu */}
                       {categoryBadge}
