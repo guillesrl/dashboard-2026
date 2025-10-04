@@ -26,6 +26,7 @@ interface Order {
   total: number;
   status: string | null;
   created_at: string | null;
+  time: string | null;
   updated_at: string | null;
 }
 
@@ -64,7 +65,10 @@ export function OrdersManagement() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders(data ? data.map(order => ({
+        ...order,
+        time: (order as any).time || null
+      })) : []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -349,6 +353,7 @@ export function OrdersManagement() {
               <TableHead>Items</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Fecha</TableHead>
               <TableHead>Hora</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -356,7 +361,7 @@ export function OrdersManagement() {
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No hay órdenes registradas
                 </TableCell>
               </TableRow>
@@ -386,10 +391,14 @@ export function OrdersManagement() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(order.created_at).toLocaleTimeString('es-ES', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                    {new Date(order.created_at).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
                     })}
+                  </TableCell>
+                  <TableCell>
+                    {order.time || '--:--'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Select
