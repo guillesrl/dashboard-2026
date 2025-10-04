@@ -30,22 +30,32 @@ const Index = () => {
         .from('menu')
         .select('*', { count: 'exact', head: true });
 
-      // Get today's orders
-      const today = new Date().toISOString().split('T')[0];
+      // Get all orders
       const { data: ordersData } = await supabase
         .from('orders')
-        .select('total, status')
-        .gte('created_at', today);
+        .select('total, status, created_at');
 
+      // Get today's date for reservations
+      const today = new Date().toISOString().split('T')[0];
+      
       // Get today's reservations
       const { count: reservationsCount } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('date', today);
 
-      // Calculate total sales from orders
-      const totalSales = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-      const activeOrders = ordersData?.filter(o => o.status === 'pendiente').length || 0;
+      // Calculate total sales from today's orders
+      const todayOrders = ordersData?.filter(order => {
+        const orderDate = new Date(order.created_at).toISOString().split('T')[0];
+        return orderDate === today;
+      }) || [];
+      
+      const totalSales = todayOrders.reduce((sum, order) => sum + Number(order.total), 0);
+      
+      // Count all active orders (not delivered or cancelled)
+      const activeOrders = ordersData?.filter(
+        order => order.status !== 'delivered' && order.status !== 'cancelled'
+      ).length || 0;
 
       setStats({
         totalSales,
