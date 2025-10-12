@@ -22,7 +22,7 @@ interface Order {
   nombre: string;
   telefono: string;
   direccion: string;
-  items: any;
+  items: OrderItem[] | string;
   total: number;
   status: string | null;
   created_at: string | null;
@@ -52,6 +52,41 @@ export function OrdersManagement() {
     { value: "cancelled", label: "Cancelado", color: "bg-red-500" }
   ];
 
+  const processOrderData = (orderData: any): Order => {
+    let processedItems: OrderItem[] = [];
+
+    if (typeof orderData.items === 'string') {
+      try {
+        const parsed = JSON.parse(orderData.items);
+        if (Array.isArray(parsed)) {
+          processedItems = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+          processedItems = [parsed];
+        }
+      } catch (error) {
+        console.error('Error parsing items JSON:', error, 'Raw data:', orderData.items);
+        processedItems = [];
+      }
+    } else if (Array.isArray(orderData.items)) {
+      processedItems = orderData.items;
+    } else if (orderData.items && typeof orderData.items === 'object') {
+      processedItems = [orderData.items];
+    }
+
+    return {
+      id: orderData.id,
+      nombre: orderData.nombre || '',
+      telefono: orderData.telefono || '',
+      direccion: orderData.direccion || '',
+      items: processedItems,
+      total: typeof orderData.total === 'number' ? orderData.total : parseFloat(orderData.total) || 0,
+      status: orderData.status || null,
+      created_at: orderData.created_at || null,
+      time: (orderData as any).time || null,
+      updated_at: orderData.updated_at || null
+    };
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchMenuItems();
@@ -65,10 +100,7 @@ export function OrdersManagement() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data ? data.map(order => ({
-        ...order,
-        time: (order as any).time || null
-      })) : []);
+      setOrders(data ? data.map(processOrderData) : []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -372,12 +404,12 @@ export function OrdersManagement() {
                   <TableCell>{order.telefono}</TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      {Array.isArray(order.items) ? (
-                        order.items.map((item: any, idx: number) => (
+                      {Array.isArray(order.items) && order.items.length > 0 ? (
+                        order.items.map((item: OrderItem, idx: number) => (
                           <div key={idx}>{item.quantity}x {item.name}</div>
                         ))
                       ) : (
-                        <div>Items no disponibles</div>
+                        <div className="text-muted-foreground">Items no disponibles</div>
                       )}
                     </div>
                   </TableCell>
