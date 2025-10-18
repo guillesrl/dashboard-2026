@@ -38,7 +38,8 @@ export function MenuManagement() {
     nombre: "",
     precio: "",
     categoria: "entrada",
-    ingredientes: ""
+    ingredientes: "",
+    stock: ""
   });
 
   const getCategoryBadge = (categoria: string | null) => {
@@ -115,7 +116,8 @@ export function MenuManagement() {
         nombre: formData.nombre,
         precio: formData.precio,
         categoria: formData.categoria,
-        ingredientes: formData.ingredientes
+        ingredientes: formData.ingredientes,
+        stock: formData.stock
       };
 
       if (editingItem) {
@@ -161,7 +163,8 @@ export function MenuManagement() {
       nombre: item.nombre || "",
       precio: item.precio || "",
       categoria: item.categoria || "entrada",
-      ingredientes: item.ingredientes || ""
+      ingredientes: item.ingredientes || "",
+      stock: item.stock || ""
     });
     setDialogOpen(true);
   };
@@ -191,12 +194,42 @@ export function MenuManagement() {
     }
   };
 
+  const handleStockUpdate = async (id: number, newStock: string) => {
+    try {
+      const { error } = await supabase
+        .from('menu')
+        .update({ stock: newStock })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state immediately for better UX
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === id ? { ...item, stock: newStock } : item
+        )
+      );
+
+      toast({
+        title: "Éxito",
+        description: "Stock actualizado correctamente"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el stock",
+        variant: "destructive"
+      });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       nombre: "",
       precio: "",
       categoria: "entrada",
-      ingredientes: ""
+      ingredientes: "",
+      stock: ""
     });
     setEditingItem(null);
   };
@@ -279,6 +312,17 @@ export function MenuManagement() {
                     rows={3}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="stock">Stock</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    min="0"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                    placeholder="Cantidad en stock"
+                  />
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancelar
@@ -299,6 +343,7 @@ export function MenuManagement() {
               <TableHead>Nombre</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Precio</TableHead>
+              <TableHead>Stock</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -306,7 +351,7 @@ export function MenuManagement() {
           <TableBody>
             {menuItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay items en el menú
                 </TableCell>
               </TableRow>
@@ -328,6 +373,15 @@ export function MenuManagement() {
                       {categoryBadge}
                     </TableCell>
                     <TableCell>${item.precio}</TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.stock || ''}
+                        onChange={(e) => handleStockUpdate(item.id, e.target.value)}
+                        className="w-20 h-8 text-center"
+                      />
+                    </TableCell>
                     <TableCell className="max-w-[300px] truncate">{item.ingredientes}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

@@ -248,7 +248,7 @@ export function OrdersManagement() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Cargando órdenes...</div>;
+    return <div className="text-center py-8">Cargando pedidos...</div>;
   }
 
   return (
@@ -256,7 +256,7 @@ export function OrdersManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Gestión de Órdenes</CardTitle>
+            <CardTitle>Gestión de Pedidos</CardTitle>
             <CardDescription>Administra los pedidos del restaurante</CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -266,14 +266,14 @@ export function OrdersManagement() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Nueva Orden
+                Nuevo Pedido
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Nueva Orden</DialogTitle>
+                <DialogTitle>Nuevo Pedido</DialogTitle>
                 <DialogDescription>
-                  Crea una nueva orden de delivery
+                  Crea un nuevo pedido de delivery
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -338,7 +338,7 @@ export function OrdersManagement() {
 
                 {formData.items.length > 0 && (
                   <div className="space-y-2">
-                    <Label>Items de la Orden</Label>
+                    <Label>Items del Pedido</Label>
                     <div className="border rounded-lg p-2">
                       {formData.items.map((item, index) => (
                         <div key={index} className="flex justify-between items-center py-1">
@@ -368,7 +368,7 @@ export function OrdersManagement() {
                     Cancelar
                   </Button>
                   <Button type="submit">
-                    Crear Orden
+                    Crear Pedido
                   </Button>
                 </div>
               </form>
@@ -394,7 +394,7 @@ export function OrdersManagement() {
             {orders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No hay órdenes registradas
+                  No hay pedidos registrados
                 </TableCell>
               </TableRow>
             ) : (
