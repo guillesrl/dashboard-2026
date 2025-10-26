@@ -52,6 +52,34 @@ export function OrdersManagement() {
     { value: "cancelled", label: "Cancelado", color: "bg-red-500" }
   ];
 
+  const formatDateTime = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? null : date;
+    } catch {
+      return null;
+    }
+  };
+
+  const formatDateForDisplay = (dateString: string | null): string => {
+    const date = formatDateTime(dateString);
+    return date ? date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }) : '--/--/----';
+  };
+
+  const formatTimeForDisplay = (dateString: string | null): string => {
+    const date = formatDateTime(dateString);
+    return date ? date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : '--:--';
+  };
+
   const processOrderData = (orderData: any): Order => {
     let processedItems: OrderItem[] = [];
 
@@ -82,10 +110,7 @@ export function OrdersManagement() {
       total: typeof orderData.total === 'number' ? orderData.total : parseFloat(orderData.total) || 0,
       status: orderData.status || null,
       created_at: orderData.created_at || null,
-      time: orderData.created_at ? new Date(orderData.created_at).toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }) : null,
+      time: formatTimeForDisplay(orderData.created_at),
       updated_at: orderData.updated_at || null
     };
   };
@@ -173,13 +198,18 @@ export function OrdersManagement() {
     }
 
     try {
+      const now = new Date();
+      const formattedDateTime = now.toISOString();
+
       const orderData = {
         nombre: formData.customer_name,
         telefono: formData.phone,
         direccion: formData.address,
         items: formData.items as any,
         total: calculateTotal(),
-        status: 'pending'
+        status: 'pending',
+        created_at: formattedDateTime,
+        updated_at: formattedDateTime
       };
 
       const { error } = await supabase
@@ -207,9 +237,15 @@ export function OrdersManagement() {
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
+      const now = new Date();
+      const formattedDateTime = now.toISOString();
+
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
+        .update({
+          status: newStatus,
+          updated_at: formattedDateTime
+        })
         .eq('id', orderId);
 
       if (error) throw error;
@@ -426,11 +462,7 @@ export function OrdersManagement() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {order.created_at ? new Date(order.created_at).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    }) : '--/--/----'}
+                    {formatDateForDisplay(order.created_at)}
                   </TableCell>
                   <TableCell>
                     {order.time || '--:--'}
