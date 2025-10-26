@@ -52,32 +52,40 @@ export function OrdersManagement() {
     { value: "cancelled", label: "Cancelado", color: "bg-red-500" }
   ];
 
-  const formatDateTime = (dateString: string | null): Date | null => {
-    if (!dateString) return null;
+  const formatDateForDisplay = (dateString: string | null): string => {
+    if (!dateString) return '--/--/----';
 
     try {
+      // Si ya está en formato YYYY-MM-DD, convertir a DD/MM/YYYY
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateString.split('-');
+        return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+      }
+
+      // Si es formato ISO completo (YYYY-MM-DDTHH:MM:SS), extraer solo la fecha
+      if (dateString.includes('T')) {
+        const datePart = dateString.split('T')[0];
+        if (datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = datePart.split('-');
+          return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+        }
+      }
+
+      // Si es otro formato, intentar parsear como fecha
       const date = new Date(dateString);
-      return isNaN(date.getTime()) ? null : date;
+      return isNaN(date.getTime()) ? '--/--/----' : date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
     } catch {
-      return null;
+      return '--/--/----';
     }
   };
 
-  const formatDateForDisplay = (dateString: string | null): string => {
-    const date = formatDateTime(dateString);
-    return date ? date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }) : '--/--/----';
-  };
-
-  const formatTimeForDisplay = (dateString: string | null): string => {
-    const date = formatDateTime(dateString);
-    return date ? date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : '--:--';
+  const formatTimeForDisplay = (timeString: string | null): string => {
+    // El campo time ya viene en formato HH:MM como "16:07"
+    return timeString || '--:--';
   };
 
   const processOrderData = (orderData: any): Order => {
@@ -110,7 +118,7 @@ export function OrdersManagement() {
       total: typeof orderData.total === 'number' ? orderData.total : parseFloat(orderData.total) || 0,
       status: orderData.status || null,
       created_at: orderData.created_at || null,
-      time: formatTimeForDisplay(orderData.created_at),
+      time: orderData.time || null,
       updated_at: orderData.updated_at || null
     };
   };
@@ -199,7 +207,15 @@ export function OrdersManagement() {
 
     try {
       const now = new Date();
-      const formattedDateTime = now.toISOString();
+
+      // Formatear fecha como YYYY-MM-DD
+      const formattedDate = now.toISOString().split('T')[0];
+
+      // Formatear hora como HH:MM
+      const formattedTime = now.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
       const orderData = {
         nombre: formData.customer_name,
@@ -208,8 +224,9 @@ export function OrdersManagement() {
         items: formData.items as any,
         total: calculateTotal(),
         status: 'pending',
-        created_at: formattedDateTime,
-        updated_at: formattedDateTime
+        created_at: formattedDate,
+        time: formattedTime,
+        updated_at: formattedDate
       };
 
       const { error } = await supabase
@@ -238,13 +255,15 @@ export function OrdersManagement() {
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
       const now = new Date();
-      const formattedDateTime = now.toISOString();
+
+      // Formatear fecha como YYYY-MM-DD para updated_at
+      const formattedDate = now.toISOString().split('T')[0];
 
       const { error } = await supabase
         .from('orders')
         .update({
           status: newStatus,
-          updated_at: formattedDateTime
+          updated_at: formattedDate
         })
         .eq('id', orderId);
 

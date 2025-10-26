@@ -71,6 +71,7 @@ export type Database = {
           nombre: string
           status: string | null
           telefono: string
+          time: string | null
           total: number
           updated_at: string | null
         }
@@ -82,6 +83,7 @@ export type Database = {
           nombre: string
           status?: string | null
           telefono: string
+          time?: string | null
           total: number
           updated_at?: string | null
         }
@@ -93,6 +95,7 @@ export type Database = {
           nombre?: string
           status?: string | null
           telefono?: string
+          time?: string | null
           total?: number
           updated_at?: string | null
         }
