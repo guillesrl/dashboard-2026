@@ -82,7 +82,10 @@ export function OrdersManagement() {
       total: typeof orderData.total === 'number' ? orderData.total : parseFloat(orderData.total) || 0,
       status: orderData.status || null,
       created_at: orderData.created_at || null,
-      time: (orderData as any).time || null,
+      time: orderData.created_at ? new Date(orderData.created_at).toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : null,
       updated_at: orderData.updated_at || null
     };
   };
@@ -176,7 +179,7 @@ export function OrdersManagement() {
         direccion: formData.address,
         items: formData.items as any,
         total: calculateTotal(),
-        status: 'pendiente'
+        status: 'pending'
       };
 
       const { error } = await supabase
@@ -243,7 +246,7 @@ export function OrdersManagement() {
       case 'ready': return <CheckCircle className="h-4 w-4" />;
       case 'delivered': return <CheckCircle className="h-4 w-4" />;
       case 'cancelled': return <XCircle className="h-4 w-4" />;
-      default: return null;
+      default: return <Clock className="h-4 w-4" />;
     }
   };
 
@@ -415,19 +418,19 @@ export function OrdersManagement() {
                   </TableCell>
                   <TableCell>${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'}</TableCell>
                   <TableCell>
-                    <Badge className={`${statusOptions.find(s => s.value === order.status)?.color}`}>
+                    <Badge className={`${statusOptions.find(s => s.value === order.status)?.color || 'bg-gray-500'}`}>
                       <span className="flex items-center gap-1">
-                        {getStatusIcon(order.status)}
-                        {statusOptions.find(s => s.value === order.status)?.label}
+                        {getStatusIcon(order.status || 'pending')}
+                        {statusOptions.find(s => s.value === order.status)?.label || 'Pendiente'}
                       </span>
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(order.created_at).toLocaleDateString('es-ES', {
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString('es-ES', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric'
-                    })}
+                    }) : '--/--/----'}
                   </TableCell>
                   <TableCell>
                     {order.time || '--:--'}
