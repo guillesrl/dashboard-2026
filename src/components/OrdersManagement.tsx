@@ -115,7 +115,7 @@ export function OrdersManagement() {
       telefono: orderData.telefono || '',
       direccion: orderData.direccion || '',
       items: processedItems,
-      total: typeof orderData.total === 'number' ? orderData.total : parseFloat(orderData.total) || 0,
+      total: typeof orderData.total === 'number' ? orderData.total : parseNumber(orderData.total),
       status: orderData.status || null,
       created_at: orderData.created_at || null,
       time: orderData.time || null,
@@ -171,7 +171,7 @@ export function OrdersManagement() {
     const newItem: OrderItem = {
       name: menuItem.nombre || "",
       quantity: parseInt(quantity),
-      price: parseFloat(menuItem.precio || "0")
+      price: parseNumber(menuItem.precio)
     };
 
     setFormData({
@@ -308,6 +308,16 @@ export function OrdersManagement() {
     }
   };
 
+  const parseNumber = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return value;
+
+    // Convertir a string y reemplazar coma por punto para parsear correctamente
+    const stringValue = String(value).replace(',', '.');
+    const parsed = parseFloat(stringValue);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   if (loading) {
     return <div className="text-center py-8">Cargando pedidos...</div>;
   }
@@ -378,7 +388,7 @@ export function OrdersManagement() {
                       <SelectContent>
                         {menuItems.map(item => (
                           <SelectItem key={item.id} value={item.id.toString()}>
-                            {item.nombre} - ${item.precio}
+                            {item.nombre} - ${parseNumber(item.precio)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -474,7 +484,7 @@ export function OrdersManagement() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'}</TableCell>
+                  <TableCell>${parseNumber(order.total).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge className={`${statusOptions.find(s => s.value === order.status)?.color || 'bg-gray-500'}`}>
                       <span className="flex items-center gap-1">
