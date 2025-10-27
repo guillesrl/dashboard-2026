@@ -126,6 +126,14 @@ export function OrdersManagement() {
   useEffect(() => {
     fetchOrders();
     fetchMenuItems();
+    
+    // Auto-refresh cada 1 minuto (60000 ms)
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 60000);
+    
+    // Limpiar el interval cuando el componente se desmonte
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = async () => {
@@ -208,10 +216,7 @@ export function OrdersManagement() {
     try {
       const now = new Date();
 
-      // Formatear fecha y hora como ISO completo para created_at string
-      const formattedDateTime = now.toISOString();
-
-      // Extraer solo la fecha para updated_at (YYYY-MM-DD)
+      // Formatear fecha en formato YYYY-MM-DD
       const formattedDate = now.toISOString().split('T')[0];
 
       // Formatear hora como HH:MM
@@ -227,7 +232,7 @@ export function OrdersManagement() {
         items: formData.items as any,
         total: calculateTotal(),
         status: 'pending',
-        created_at: formattedDateTime,
+        created_at: formattedDate,
         time: formattedTime,
         updated_at: formattedDate
       };
