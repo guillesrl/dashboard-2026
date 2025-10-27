@@ -20,6 +20,7 @@ const Index = () => {
     todayReservations: 0,
     monthlyReservations: 0,
     menuItems: 0,
+    unavailableItems: 0,
   });
 
   useEffect(() => {
@@ -47,10 +48,18 @@ const Index = () => {
 
   const loadStats = async () => {
     try {
-      // Get menu items count
-      const { count: menuCount } = await supabase
+      // Get menu items
+      const { data: menuData } = await supabase
         .from('menu')
-        .select('*', { count: 'exact', head: true });
+        .select('stock, precio');
+
+      // Count total menu items and unavailable items
+      const itemsWithPrice = menuData?.filter(item => item.precio && item.precio.trim() !== '') || [];
+      const menuCount = itemsWithPrice.length;
+      const unavailableItems = itemsWithPrice.filter(item => {
+        const stock = item.stock ? parseInt(String(item.stock)) : 0;
+        return stock < 1;
+      }).length;
 
       // Get all orders
       const { data: ordersData } = await supabase
@@ -110,6 +119,7 @@ const Index = () => {
         todayReservations: reservationsCount || 0,
         monthlyReservations,
         menuItems: menuCount || 0,
+        unavailableItems: unavailableItems || 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -192,6 +202,9 @@ const Index = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.menuItems}</div>
               <p className="text-xs text-muted-foreground">Total de platos disponibles</p>
+              <div className="mt-2 pt-2 border-t">
+                <div className="text-sm font-semibold text-muted-foreground">No disponibles: {stats.unavailableItems}</div>
+              </div>
             </CardContent>
           </Card>
         </div>
