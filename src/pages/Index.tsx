@@ -23,6 +23,17 @@ const Index = () => {
     loadStats();
   }, []);
 
+  // Función para parsear números que pueden tener coma o punto decimal (formato europeo vs americano)
+  const parseNumber = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return value;
+
+    // Convertir a string y reemplazar coma por punto para parsear correctamente
+    const stringValue = String(value).replace(',', '.');
+    const parsed = parseFloat(stringValue);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const loadStats = async () => {
     try {
       // Get menu items count
@@ -50,7 +61,7 @@ const Index = () => {
         return orderDate === today;
       }) || [];
       
-      const totalSales = todayOrders.reduce((sum, order) => sum + Number(order.total), 0);
+      const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
       
       // Count all active orders (not delivered or cancelled)
       const activeOrders = ordersData?.filter(
@@ -129,7 +140,7 @@ const Index = () => {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Items en Menú</CardTitle>
+              <CardTitle className="text-sm font-medium">Platos del Menú</CardTitle>
               <ChefHat className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
