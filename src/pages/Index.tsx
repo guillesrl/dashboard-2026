@@ -14,13 +14,24 @@ const Index = () => {
   const { theme, setTheme } = useTheme();
   const [stats, setStats] = useState({
     totalSales: 0,
+    monthlySales: 0,
     activeOrders: 0,
+    monthlyOrders: 0,
     todayReservations: 0,
+    monthlyReservations: 0,
     menuItems: 0,
   });
 
   useEffect(() => {
     loadStats();
+    
+    // Auto-refresh cada 1 minuto (60000 ms)
+    const interval = setInterval(() => {
+      loadStats();
+    }, 60000);
+    
+    // Limpiar el interval cuando el componente se desmonte
+    return () => clearInterval(interval);
   }, []);
 
   // Función para parsear números que pueden tener coma o punto decimal (formato europeo vs americano)
@@ -48,12 +59,26 @@ const Index = () => {
 
       // Get today's date for reservations
       const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       
       // Get today's reservations
       const { count: reservationsCount } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('date', today);
+
+      // Get all reservations for monthly count
+      const { data: allReservations } = await supabase
+        .from('reservations')
+        .select('date');
+
+      // Calculate monthly reservations
+      const monthlyReservations = allReservations?.filter(reservation => {
+        const reservationDate = new Date(reservation.date);
+        return reservationDate.getMonth() === currentMonth && reservationDate.getFullYear() === currentYear;
+      }).length || 0;
 
       // Calculate total sales from today's orders
       const todayOrders = ordersData?.filter(order => {
@@ -63,6 +88,15 @@ const Index = () => {
       
       const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
       
+      // Calculate monthly sales and orders
+      const monthlyOrdersData = ordersData?.filter(order => {
+        const orderDate = new Date(order.created_at);
+        return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+      }) || [];
+
+      const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
+      const monthlyOrders = monthlyOrdersData.length;
+      
       // Count all active orders (not delivered or cancelled)
       const activeOrders = ordersData?.filter(
         order => order.status !== 'delivered' && order.status !== 'cancelled'
@@ -70,8 +104,11 @@ const Index = () => {
 
       setStats({
         totalSales,
+        monthlySales,
         activeOrders,
+        monthlyOrders,
         todayReservations: reservationsCount || 0,
+        monthlyReservations,
         menuItems: menuCount || 0,
       });
     } catch (error) {
@@ -116,6 +153,9 @@ const Index = () => {
             <CardContent>
               <div className="text-2xl font-bold">${stats.totalSales.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">Total de pedidos del día</p>
+              <div className="mt-2 pt-2 border-t">
+                <div className="text-sm font-semibold text-muted-foreground">Mes: ${stats.monthlySales.toFixed(2)}</div>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -126,6 +166,9 @@ const Index = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.activeOrders}</div>
               <p className="text-xs text-muted-foreground">Pendientes de entrega</p>
+              <div className="mt-2 pt-2 border-t">
+                <div className="text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyOrders} pedidos</div>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -136,6 +179,9 @@ const Index = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.todayReservations}</div>
               <p className="text-xs text-muted-foreground">Reservas confirmadas</p>
+              <div className="mt-2 pt-2 border-t">
+                <div className="text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyReservations} reservas</div>
+              </div>
             </CardContent>
           </Card>
           <Card>

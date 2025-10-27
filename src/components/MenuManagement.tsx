@@ -84,6 +84,14 @@ export function MenuManagement() {
 
   useEffect(() => {
     fetchMenuItems();
+    
+    // Auto-refresh cada 1 minuto (60000 ms)
+    const interval = setInterval(() => {
+      fetchMenuItems();
+    }, 60000);
+    
+    // Limpiar el interval cuando el componente se desmonte
+    return () => clearInterval(interval);
   }, []);
 
   const fetchMenuItems = async () => {
