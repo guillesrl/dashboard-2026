@@ -29,6 +29,11 @@ export function ReservationsManagement() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filterDate, setFilterDate] = useState(() => {
+    // Inicializar con la fecha de hoy en formato YYYY-MM-DD
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [formData, setFormData] = useState({
     customer_name: "",
     phone: "",
@@ -159,6 +164,12 @@ export function ReservationsManagement() {
     }
   };
 
+  // Filtrar reservas por la fecha seleccionada
+  const filteredReservations = reservations.filter(reservation => {
+    if (!filterDate) return true; // Si no hay filtro, mostrar todas
+    return reservation.date === filterDate;
+  });
+
   if (loading) {
     return <div className="text-center py-8">Cargando reservas...</div>;
   }
@@ -171,16 +182,27 @@ export function ReservationsManagement() {
             <CardTitle>Gestión de Reservas</CardTitle>
             <CardDescription>Administra las reservas del restaurante</CardDescription>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nueva Reserva
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="filterDate" className="whitespace-nowrap">Filtrar por fecha:</Label>
+              <Input
+                id="filterDate"
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="w-[180px]"
+              />
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Reserva
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Nueva Reserva</DialogTitle>
@@ -262,6 +284,7 @@ export function ReservationsManagement() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -279,14 +302,14 @@ export function ReservationsManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservations.length === 0 ? (
+            {filteredReservations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No hay reservas registradas
+                  No hay reservas para la fecha seleccionada
                 </TableCell>
               </TableRow>
             ) : (
-              reservations.map((reservation) => (
+              filteredReservations.map((reservation) => (
                 <TableRow key={reservation.id}>
                   <TableCell className="font-medium">{reservation.customer_name}</TableCell>
                   <TableCell>
