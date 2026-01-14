@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { OrdersService, Order, OrderItem } from "@/services/ordersService";
+import { MenuService } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,24 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: number;
-  nombre: string;
-  telefono: string;
-  direccion: string;
-  items: OrderItem[] | string;
-  total: number;
-  status: string | null;
-  created_at: string | null;
-  time: string | null;
-  updated_at: string | null;
-}
 
 export function OrdersManagement() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -37,8 +20,8 @@ export function OrdersManagement() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     customer_name: "",
-    phone: "",
-    address: "",
+    customer_phone: "",
+    customer_email: "",
     items: [] as OrderItem[]
   });
   const [selectedItem, setSelectedItem] = useState("");
@@ -89,36 +72,30 @@ export function OrdersManagement() {
   };
 
   const processOrderData = (orderData: any): Order => {
+    // Procesar items si vienen como string
     let processedItems: OrderItem[] = [];
-
-    if (typeof orderData.items === 'string') {
+    if (Array.isArray(orderData.items)) {
+      processedItems = orderData.items;
+    } else if (typeof orderData.items === 'string') {
       try {
-        const parsed = JSON.parse(orderData.items);
-        if (Array.isArray(parsed)) {
-          processedItems = parsed;
-        } else if (parsed && typeof parsed === 'object') {
-          processedItems = [parsed];
-        }
-      } catch (error) {
-        console.error('Error parsing items JSON:', error, 'Raw data:', orderData.items);
+        processedItems = JSON.parse(orderData.items);
+      } catch {
         processedItems = [];
       }
-    } else if (Array.isArray(orderData.items)) {
-      processedItems = orderData.items;
-    } else if (orderData.items && typeof orderData.items === 'object') {
-      processedItems = [orderData.items];
     }
 
     return {
       id: orderData.id,
-      nombre: orderData.nombre || '',
-      telefono: orderData.telefono || '',
-      direccion: orderData.direccion || '',
+      customer_name: orderData.customer_name || orderData.nombre || '',
+      customer_phone: orderData.customer_phone || orderData.telefono || '',
+      customer_email: orderData.customer_email || '',
       items: processedItems,
       total: typeof orderData.total === 'number' ? orderData.total : parseNumber(orderData.total),
-      status: orderData.status || null,
+      status: orderData.status || 'pending',
+      notes: orderData.notes || '',
       created_at: orderData.created_at || null,
       time: orderData.time || null,
+      order_datetime: orderData.order_datetime || null,
       updated_at: orderData.updated_at || null
     };
   };
@@ -138,17 +115,13 @@ export function OrdersManagement() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data ? data.map(processOrderData) : []);
-    } catch (error: any) {
+      const data = await OrdersService.getAll();
+      setOrders(data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar las órdenes",
+        description: "No se pudieron cargar los pedidos",
         variant: "destructive"
       });
     } finally {
@@ -158,15 +131,10 @@ export function OrdersManagement() {
 
   const fetchMenuItems = async () => {
     try {
-      const { data, error } = await supabase
-        .from('menu')
-        .select('*')
-        .order('nombre');
-
-      if (error) throw error;
-      setMenuItems(data || []);
-    } catch (error: any) {
-      console.error("Error loading menu items:", error);
+      const data = await MenuService.getAll();
+      setMenuItems(data);
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
     }
   };
 
@@ -177,9 +145,10 @@ export function OrdersManagement() {
     if (!menuItem) return;
 
     const newItem: OrderItem = {
-      name: menuItem.nombre || "",
-      quantity: parseInt(quantity),
-      price: parseNumber(menuItem.precio)
+      id: menuItem.id,
+      name: menuItem.name,
+      price: menuItem.price,
+      quantity: parseInt(quantity)
     };
 
     setFormData({
@@ -226,22 +195,16 @@ export function OrdersManagement() {
       });
 
       const orderData = {
-        nombre: formData.customer_name,
-        telefono: formData.phone,
-        direccion: formData.address,
-        items: formData.items as any,
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone,
+        customer_email: formData.customer_email,
+        items: formData.items,
         total: calculateTotal(),
-        status: 'pending',
-        created_at: formattedDate,
-        time: formattedTime,
-        updated_at: formattedDate
+        status: 'pending' as const,
+        notes: ''
       };
 
-      const { error } = await supabase
-        .from('orders')
-        .insert([orderData]);
-
-      if (error) throw error;
+      await OrdersService.create(orderData);
       
       toast({
         title: "Éxito",
@@ -260,22 +223,9 @@ export function OrdersManagement() {
     }
   };
 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+  const updateOrderStatus = async (orderId: number, newStatus: Order['status']) => {
     try {
-      const now = new Date();
-
-      // Formatear fecha como YYYY-MM-DD para updated_at
-      const formattedDate = now.toISOString().split('T')[0];
-
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          status: newStatus,
-          updated_at: formattedDate
-        })
-        .eq('id', orderId);
-
-      if (error) throw error;
+      await OrdersService.updateStatus(orderId, newStatus);
 
       toast({
         title: "Éxito",
@@ -294,8 +244,8 @@ export function OrdersManagement() {
   const resetForm = () => {
     setFormData({
       customer_name: "",
-      phone: "",
-      address: "",
+      customer_phone: "",
+      customer_email: "",
       items: []
     });
     setSelectedItem("");
@@ -364,22 +314,22 @@ export function OrdersManagement() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Teléfono</Label>
+                    <Label htmlFor="customer_phone">Teléfono</Label>
                     <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      id="customer_phone"
+                      value={formData.customer_phone}
+                      onChange={(e) => setFormData({...formData, customer_phone: e.target.value})}
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="address">Dirección</Label>
+                  <Label htmlFor="customer_email">Email</Label>
                   <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    required
+                    id="customer_email"
+                    type="email"
+                    value={formData.customer_email}
+                    onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
                   />
                 </div>
 
@@ -393,7 +343,7 @@ export function OrdersManagement() {
                       <SelectContent>
                         {menuItems.map(item => (
                           <SelectItem key={item.id} value={item.id.toString()}>
-                            {item.nombre} - ${parseNumber(item.precio)}
+                            {item.name} - ${item.price}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -476,8 +426,8 @@ export function OrdersManagement() {
             ) : (
               orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.nombre}</TableCell>
-                  <TableCell>{order.telefono}</TableCell>
+                  <TableCell className="font-medium">{order.customer_name}</TableCell>
+                  <TableCell>{order.customer_phone}</TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {Array.isArray(order.items) && order.items.length > 0 ? (
@@ -502,12 +452,12 @@ export function OrdersManagement() {
                     {formatDateForDisplay(order.created_at)}
                   </TableCell>
                   <TableCell>
-                    {order.time || '--:--'}
+                    {formatTimeForDisplay(order.time)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Select
                       value={order.status}
-                      onValueChange={(value) => updateOrderStatus(order.id, value)}
+                      onValueChange={(value: Order['status']) => updateOrderStatus(order.id, value)}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />
