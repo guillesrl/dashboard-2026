@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { supabase } from "@/integrations/supabase/client";
+import { MenuService } from "@/services/menuService";
+import { OrdersService } from "@/services/ordersService";
+import { ReservationsService } from "@/services/reservationsService";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("menu");
@@ -49,77 +51,44 @@ const Index = () => {
   const loadStats = async () => {
     try {
       // Get menu items
-      const { data: menuData } = await supabase
-        .from('menu')
-        .select('stock, precio');
+      const menuData = await MenuService.getAll();
 
       // Count total menu items and unavailable items
-      const itemsWithPrice = menuData?.filter(item => item.precio && item.precio.trim() !== '') || [];
+      const itemsWithPrice = menuData.filter(item => item.price && item.price > 0);
       const menuCount = itemsWithPrice.length;
       const unavailableItems = itemsWithPrice.filter(item => {
-        const stock = item.stock ? parseInt(String(item.stock)) : 0;
-        return stock < 1;
+        return item.stock < 1 || !item.available;
       }).length;
 
       // Get all orders
-      const { data: ordersData } = await supabase
-        .from('orders')
-        .select('total, status, created_at');
+      const ordersData = await OrdersService.getAll();
+      const todayOrders = await OrdersService.getToday();
+      const monthlyOrdersData = await OrdersService.getThisMonth();
+      const activeOrdersData = await OrdersService.getActive();
 
-      // Get today's date for reservations
-      const today = new Date().toISOString().split('T')[0];
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
       // Get today's reservations
-      const { count: reservationsCount } = await supabase
-        .from('reservations')
-        .select('*', { count: 'exact', head: true })
-        .eq('date', today);
-
-      // Get all reservations for monthly count
-      const { data: allReservations } = await supabase
-        .from('reservations')
-        .select('date');
-
-      // Calculate monthly reservations
-      const monthlyReservations = allReservations?.filter(reservation => {
-        const reservationDate = new Date(reservation.date);
-        return reservationDate.getMonth() === currentMonth && reservationDate.getFullYear() === currentYear;
-      }).length || 0;
+      const todayReservations = await ReservationsService.getToday();
+      const monthlyReservationsData = await ReservationsService.getThisMonth();
 
       // Calculate total sales from today's orders
-      const todayOrders = ordersData?.filter(order => {
-        const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-        return orderDate === today;
-      }) || [];
-      
       const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
       
       // Calculate monthly sales and orders
-      const monthlyOrdersData = ordersData?.filter(order => {
-        const orderDate = new Date(order.created_at);
-        return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-      }) || [];
-
       const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
       const monthlyOrders = monthlyOrdersData.length;
       
       // Count all active orders (not delivered or cancelled)
-      const activeOrders = ordersData?.filter(
-        order => order.status !== 'delivered' && order.status !== 'cancelled'
-      ).length || 0;
+      const activeOrders = activeOrdersData.length;
 
       setStats({
         totalSales,
         monthlySales,
         activeOrders,
         monthlyOrders,
-        todayReservations: reservationsCount || 0,
-        monthlyReservations,
-        menuItems: menuCount || 0,
-        unavailableItems: unavailableItems || 0,
+        todayReservations: todayReservations.length,
+        monthlyReservations: monthlyReservationsData.length,
+        menuItems: menuCount,
+        unavailableItems: unavailableItems,
       });
     } catch (error) {
       console.error('Error loading stats:', error);

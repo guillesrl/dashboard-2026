@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { ReservationsService, Reservation } from "@/services/reservationsService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,37 +11,20 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
 
-interface Reservation {
-  id: number;
-  customer_name: string;
-  phone: string;
-  date: string;
-  time: string;
-  people: number;
-  table_number: number | null;
-  status: string;
-  google_event_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
 
 export function ReservationsManagement() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [filterDate, setFilterDate] = useState(() => {
-    // Inicializar con la fecha de hoy en formato YYYY-MM-DD
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [filterDate, setFilterDate] = useState(""); // Inicializar vacío para mostrar todas
   const [formData, setFormData] = useState({
     customer_name: "",
-    phone: "",
+    customer_phone: "",
     date: "",
     time: "",
-    people: "2",
-    table_number: "",
-    status: "confirmed"
+    guests: "2",
+    status: "confirmed" as const,
+    notes: ""
   });
 
   const statusOptions = [
@@ -65,15 +48,10 @@ export function ReservationsManagement() {
 
   const fetchReservations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('reservations')
-        .select('*')
-        .order('date', { ascending: true })
-        .order('time', { ascending: true });
-
-      if (error) throw error;
-      setReservations(data || []);
-    } catch (error: any) {
+      const data = await ReservationsService.getAll();
+      setReservations(data);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las reservas",
@@ -90,19 +68,15 @@ export function ReservationsManagement() {
     try {
       const reservationData = {
         customer_name: formData.customer_name,
-        phone: formData.phone,
+        customer_phone: formData.customer_phone,
         date: formData.date,
         time: formData.time,
-        people: parseInt(formData.people),
-        table_number: formData.table_number ? parseInt(formData.table_number) : null,
-        status: formData.status
+        guests: parseInt(formData.guests),
+        status: formData.status,
+        notes: formData.notes
       };
 
-      const { error } = await supabase
-        .from('reservations')
-        .insert([reservationData]);
-
-      if (error) throw error;
+      await ReservationsService.create(reservationData);
       
       toast({
         title: "Éxito",
@@ -121,14 +95,9 @@ export function ReservationsManagement() {
     }
   };
 
-  const updateReservationStatus = async (id: number, newStatus: string) => {
+  const updateReservationStatus = async (id: number, newStatus: Reservation['status']) => {
     try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ status: newStatus })
-        .eq('id', id);
-
-      if (error) throw error;
+      await ReservationsService.updateStatus(id, newStatus);
 
       toast({
         title: "Éxito",
@@ -147,19 +116,21 @@ export function ReservationsManagement() {
   const resetForm = () => {
     setFormData({
       customer_name: "",
-      phone: "",
+      customer_phone: "",
       date: "",
       time: "",
-      people: "2",
-      table_number: "",
-      status: "confirmed"
+      guests: "2",
+      status: "confirmed" as const,
+      notes: ""
     });
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'pending': return <Clock className="h-4 w-4" />;
       case 'cancelled': return <XCircle className="h-4 w-4" />;
+      case 'completed': return <CheckCircle className="h-4 w-4" />;
       default: return null;
     }
   };
@@ -167,7 +138,33 @@ export function ReservationsManagement() {
   // Filtrar reservas por la fecha seleccionada
   const filteredReservations = reservations.filter(reservation => {
     if (!filterDate) return true; // Si no hay filtro, mostrar todas
-    return reservation.date === filterDate;
+    
+    // Manejar diferentes formatos de fecha
+    const reservationDate = reservation.date;
+    
+    // Si reservation.date es un string en formato ISO, usar la misma lógica que la tabla
+    if (typeof reservationDate === 'string') {
+      // Convertir a Date y luego a formato local (como lo hace la tabla)
+      const localDate = new Date(reservationDate);
+      const localDateString = localDate.toLocaleDateString('es-ES');
+      
+      // Convertir el filtro al mismo formato
+      const filterDateObj = new Date(filterDate);
+      const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+      
+      return localDateString === filterDateString;
+    }
+    
+    // Si es un objeto Date
+    if (reservationDate && typeof reservationDate === 'object' && 'toLocaleDateString' in reservationDate) {
+      const localDateString = (reservationDate as Date).toLocaleDateString('es-ES');
+      const filterDateObj = new Date(filterDate);
+      const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+      
+      return localDateString === filterDateString;
+    }
+    
+    return false;
   });
 
   if (loading) {
@@ -221,12 +218,12 @@ export function ReservationsManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="customer_phone">Teléfono</Label>
                   <Input
-                    id="phone"
+                    id="customer_phone"
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    value={formData.customer_phone}
+                    onChange={(e) => setFormData({...formData, customer_phone: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -253,23 +250,22 @@ export function ReservationsManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="people">Número de Personas</Label>
+                    <Label htmlFor="guests">Número de Personas</Label>
                     <Input
-                      id="people"
+                      id="guests"
                       type="number"
                       min="1"
-                      value={formData.people}
-                      onChange={(e) => setFormData({...formData, people: e.target.value})}
+                      value={formData.guests}
+                      onChange={(e) => setFormData({...formData, guests: e.target.value})}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="table">Mesa (opcional)</Label>
+                    <Label htmlFor="notes">Notas</Label>
                     <Input
-                      id="table"
-                      type="number"
-                      value={formData.table_number}
-                      onChange={(e) => setFormData({...formData, table_number: e.target.value})}
+                      id="notes"
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
                     />
                   </div>
                 </div>
@@ -327,15 +323,17 @@ export function ReservationsManagement() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      {reservation.people}
+                      {reservation.guests}
                     </div>
                   </TableCell>
-                  <TableCell>{reservation.table_number || '-'}</TableCell>
                   <TableCell>
-                    {reservation.phone && (
+                    {reservation.notes || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {reservation.customer_phone && (
                       <div className="flex items-center gap-1">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        {reservation.phone}
+                        {reservation.customer_phone}
                       </div>
                     )}
                   </TableCell>
@@ -350,7 +348,7 @@ export function ReservationsManagement() {
                   <TableCell className="text-right">
                     <Select
                       value={reservation.status}
-                      onValueChange={(value) => updateReservationStatus(reservation.id, value)}
+                      onValueChange={(value: Reservation['status']) => updateReservationStatus(reservation.id, value)}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />
