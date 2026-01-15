@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -450,14 +451,24 @@ app.patch('/api/reservations/:id/status', async (req, res) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, 'dist');
+const indexHtmlPath = path.join(distPath, 'index.html');
 
-// Servir archivos estáticos de la carpeta 'dist' (donde Vite construye el proyecto)
-app.use(express.static(path.join(__dirname, 'dist')));
+// En despliegues de 2 servicios (frontend separado), normalmente NO existirá `dist/` en el backend.
+// Solo servimos el frontend si el build está presente.
+if (fs.existsSync(indexHtmlPath)) {
+  // Servir archivos estáticos de la carpeta 'dist' (donde Vite construye el proyecto)
+  app.use(express.static(distPath));
 
-// Manejar cualquier otra ruta devolviendo el index.html de React
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+  // Manejar cualquier otra ruta devolviendo el index.html de React
+  app.get('*', (req, res) => {
+    res.sendFile(indexHtmlPath);
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.status(200).send('Backend API running. Use /api/* endpoints.');
+  });
+}
 
 // Iniciar servidor
 app.listen(port, () => {
