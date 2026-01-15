@@ -59,7 +59,7 @@ DB_PASSWORD=tu_password
 DB_SSL=false
 
 # Configuración API
-VITE_API_URL=http://localhost:3001/api
+VITE_API_URL=/api
 ```
 
 ### 4. Configurar base de datos
@@ -91,6 +91,41 @@ npm run dev
 ```bash
 npm run build
 npm run preview
+```
+
+## 🚀 Deploy en EasyPanel (recomendado)
+
+Este proyecto está preparado para correr en **2 servicios** (recomendado):
+
+- **Frontend**: sirve el build de Vite (`dist`)
+- **Backend**: Express sirve la API en `/api`
+- **Reverse proxy**: enruta `/api/*` del dominio del frontend hacia el backend
+
+### Build Command
+```bash
+npm ci
+npm run build
+```
+
+### Start Command
+```bash
+npm run start:frontend
+```
+
+### Variables de entorno (EasyPanel)
+
+- **Frontend**
+  - **PORT**: el puerto que expone EasyPanel para el servicio web
+  - **VITE_API_URL**: `/api`
+
+- **Backend**
+  - **PORT**: `3001` (o el que te asigne EasyPanel)
+  - **DATABASE_URL**: tu conexión PostgreSQL
+  - **DB_SSL**: `true` si tu proveedor requiere SSL
+
+### Backend Start Command (EasyPanel)
+```bash
+npm run start:backend
 ```
 
 ## 📡 API Endpoints
