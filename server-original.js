@@ -49,6 +49,27 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok' } });
 });
 
+// DB healthcheck (útil para verificar conectividad a PostgreSQL en EasyPanel)
+app.get('/api/db-health', async (req, res) => {
+  try {
+    await query('SELECT 1');
+    res.json({
+      success: true,
+      data: {
+        status: 'ok',
+        database_url_set: Boolean(process.env.DATABASE_URL),
+        db_host: process.env.DB_HOST || null,
+        db_port: process.env.DB_PORT || null,
+        db_name: process.env.DB_NAME || null,
+        db_user: process.env.DB_USER || null,
+        db_ssl: process.env.DB_SSL || null,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Helper function para ejecutar queries
 async function query(text, params) {
   const start = Date.now();
