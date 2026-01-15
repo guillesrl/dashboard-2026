@@ -2,6 +2,8 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const { Pool } = pg;
 
@@ -11,9 +13,27 @@ const port = process.env.PORT || 3001;
 console.log('Starting server (Original structure)...');
 
 // Configuración de la base de datos
+// Preferencia:
+// - DATABASE_URL
+// - Variables sueltas DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+const databaseUrl = process.env.DATABASE_URL;
+const poolConfig = databaseUrl
+  ? {
+      connectionString: databaseUrl,
+    }
+  : {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    };
+
+const sslEnabled = String(process.env.DB_SSL).toLowerCase() === 'true';
+
 const pool = new Pool({
-  connectionString: 'postgres://postgres:River035@panel.guille.live:5432/postgres?sslmode=disable',
-  ssl: false,
+  ...poolConfig,
+  ssl: sslEnabled ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -22,6 +42,11 @@ const pool = new Pool({
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Healthcheck (útil para EasyPanel / reverse proxy)
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, data: { status: 'ok' } });
+});
 
 // Helper function para ejecutar queries
 async function query(text, params) {
@@ -343,10 +368,10 @@ app.get('/api/reservations', async (req, res) => {
       return mapped;
     });
     
-    console.log(`📊 Enviando ${mappedData.length} reservas`);
+    console.log(` Enviando ${mappedData.length} reservas`);
     res.json({ success: true, data: mappedData });
   } catch (error) {
-    console.error('❌ Error en /api/reservations:', error.message);
+    console.error(' Error en /api/reservations:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -423,10 +448,21 @@ app.patch('/api/reservations/:id/status', async (req, res) => {
   }
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Servir archivos estáticos de la carpeta 'dist' (donde Vite construye el proyecto)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Manejar cualquier otra ruta devolviendo el index.html de React
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 // Iniciar servidor
 app.listen(port, () => {
-  console.log(`🚀 API server running on http://localhost:${port}`);
-  console.log(`📊 Database: PostgreSQL (Original structure)`);
+  console.log(` API server running on http://localhost:${port}`);
+  console.log(` Database: PostgreSQL (Original structure)`);
 });
 
 // Cerrar conexión pool cuando el proceso termina
