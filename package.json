@@ -7,7 +7,6 @@
     "dev": "vite",
     "server": "node server-original.js",
     "start": "node server-original.js",
-    "server:watch": "nodemon server-original.js",
     "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",

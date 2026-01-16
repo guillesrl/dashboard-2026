@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 const { Pool } = pg;
 
 const app = express();
-const port = process.env.BACKEND_PORT || 3001;
+const port = process.env.PORT || 80;
 
 console.log('Starting server (Original structure)...');
 
