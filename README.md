@@ -26,6 +26,10 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **PostgreSQL** - Base de datos
 - **pg** - Cliente PostgreSQL para Node.js
 - **CORS** - Habilitar peticiones cross-origin
+- **Vite** - Build tool y servidor de desarrollo
+- **@vitejs/plugin-react-swc** - Plugin React para Vite
+- **lovable-tagger** - Etiquetado de componentes
+- **autoprefixer** - Procesamiento CSS con PostCSS
 
 ## 📋 Requisitos Previos
 
