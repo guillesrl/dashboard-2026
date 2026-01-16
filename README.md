@@ -93,13 +93,13 @@ npm run build
 npm run preview
 ```
 
-## 🚀 Deploy en EasyPanel (recomendado)
+## 🚀 Deploy en EasyPanel (Configuración Unificada)
 
-Este proyecto está preparado para correr en **2 servicios** (recomendado):
+Este proyecto está configurado para correr en **un solo servicio** (recomendado):
 
-- **Frontend**: sirve el build de Vite (`dist`)
-- **Backend**: Express sirve la API en `/api`
-- **Reverse proxy**: enruta `/api/*` del dominio del frontend hacia el backend
+- **Servidor Unificado**: Express maneja tanto la API (`/api/*`) como el frontend estático
+- **Sin proxy necesario**: Todo corre en el mismo puerto
+- **Base de Datos**: PostgreSQL para almacenamiento persistente
 
 ### Build Command
 ```bash
@@ -109,24 +109,27 @@ npm run build
 
 ### Start Command
 ```bash
-npm run start:frontend
+npm start
 ```
 
 ### Variables de entorno (EasyPanel)
 
-- **Frontend**
-  - **PORT**: el puerto que expone EasyPanel para el servicio web
-  - **VITE_API_URL**: `/api`
+```env
+# Base de Datos
+DATABASE_URL=postgres://postgres:River035@n8n_postgres:5432/postgres?sslmode=disable
+DB_SSL=false
 
-- **Backend**
-  - **PORT**: `3001` (o el que te asigne EasyPanel)
-  - **DATABASE_URL**: tu conexión PostgreSQL
-  - **DB_SSL**: `true` si tu proveedor requiere SSL
-
-### Backend Start Command (EasyPanel)
-```bash
-npm run start:backend
+# Servidor
+PORT=80
+NODE_ENV=production
 ```
+
+### Estructura del Servidor
+
+- **API Endpoints**: `/api/*` - manejados por Express
+- **Frontend**: Archivos estáticos servidos desde `/dist`
+- **Health Check**: `/api/health` - para verificar estado del servidor
+- **DB Health Check**: `/api/db-health` - para verificar conexión a PostgreSQL
 
 ## 📡 API Endpoints
 
@@ -209,13 +212,14 @@ npm run dev          # Iniciar frontend
 npm run server       # Iniciar backend (server-original.js)
 npm run dev:full     # Iniciar ambos simultáneamente
 npm run build        # Build para producción
+npm start            # Iniciar servidor unificado (producción)
 ```
 
 ## 🐛 Troubleshooting
 
 ### Error de conexión a PostgreSQL
 - Verifica que PostgreSQL esté corriendo
-- Confirma las credenciales en `.env`
+- Confirma las credenciales en las variables de entorno
 - Asegúrate que la base de datos exista
 
 ### Error "require is not defined"
@@ -223,8 +227,12 @@ npm run build        # Build para producción
 - Usa `import` en lugar de `require`
 
 ### Puerto en uso
-- El backend usa el puerto 3001
-- El frontend usa el puerto 8080 (o el que asigne Vite)
+- El servidor unificado usa el puerto configurado en `PORT` (default: 80)
+- En desarrollo usa el puerto que asigne Vite (usualmente 5173)
+
+### Error de Express 5 con rutas wildcard
+- El proyecto usa `app.use()` en lugar de `app.get('*')` para compatibilidad
+- Esto resuelve el error "Missing parameter name"
 
 ## 📝 Notas de Desarrollo
 
