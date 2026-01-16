@@ -482,7 +482,7 @@ if (fs.existsSync(indexHtmlPath)) {
   app.use(express.static(distPath));
 
   // Manejar cualquier otra ruta devolviendo el index.html de React
-  app.get('/*', (req, res) => {
+  app.use((req, res) => {
     res.sendFile(indexHtmlPath);
   });
 } else {
