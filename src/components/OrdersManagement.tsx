@@ -282,8 +282,8 @@ export function OrdersManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Gestión de Pedidos</CardTitle>
-            <CardDescription>Administra los pedidos del restaurante</CardDescription>
+            <CardTitle>Pedidos</CardTitle>
+            <CardDescription>Administra los pedidos</CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);

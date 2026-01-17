@@ -202,8 +202,8 @@ export function MenuManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Gestión del Menú</CardTitle>
-            <CardDescription>Administra los platillos de tu restaurante</CardDescription>
+            <CardTitle>Menú</CardTitle>
+            <CardDescription>Administra los platos</CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
