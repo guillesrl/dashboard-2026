@@ -107,7 +107,7 @@ const Index = () => {
               <ChefHat className="h-8 w-8 text-primary" />
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Restaurant Dashboard</h1>
-                <p className="text-muted-foreground">Sistema de gestión integral para restaurantes</p>
+                <p className="text-muted-foreground">Sistema de gestión para restaurantes</p>
               </div>
             </div>
             <Button
