@@ -194,8 +194,8 @@ export function ReservationsManagement() {
       <CardHeader>
         <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-4' : ''}`}>
           <div>
-            <CardTitle>Gestión de Reservas</CardTitle>
-            <CardDescription>Administra las reservas del restaurante</CardDescription>
+            <CardTitle>Reservas</CardTitle>
+            <CardDescription>Administra las reservas</CardDescription>
           </div>
           <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
             <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
