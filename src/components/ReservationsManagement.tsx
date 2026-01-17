@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export function ReservationsManagement() {
@@ -26,6 +27,7 @@ export function ReservationsManagement() {
     status: "confirmed" as const,
     notes: ""
   });
+  const isMobile = useIsMobile();
 
   const statusOptions = [
     { value: "confirmed", label: "Confirmada", color: "bg-green-500" },
@@ -174,20 +176,20 @@ export function ReservationsManagement() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-4' : ''}`}>
           <div>
             <CardTitle>Gestión de Reservas</CardTitle>
             <CardDescription>Administra las reservas del restaurante</CardDescription>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
+            <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
               <Label htmlFor="filterDate" className="whitespace-nowrap">Filtrar por fecha:</Label>
               <Input
                 id="filterDate"
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="w-[180px]"
+                className={isMobile ? 'flex-1' : 'w-[180px]'}
               />
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -197,7 +199,7 @@ export function ReservationsManagement() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nueva Reserva
+                  {isMobile ? '' : 'Nueva Reserva'}
                 </Button>
               </DialogTrigger>
             <DialogContent>
