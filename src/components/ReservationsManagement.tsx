@@ -137,37 +137,53 @@ export function ReservationsManagement() {
     }
   };
 
-  // Filtrar reservas por la fecha seleccionada
-  const filteredReservations = reservations.filter(reservation => {
-    if (!filterDate) return true; // Si no hay filtro, mostrar todas
-    
-    // Manejar diferentes formatos de fecha
-    const reservationDate = reservation.date;
-    
-    // Si reservation.date es un string en formato ISO, usar la misma lógica que la tabla
-    if (typeof reservationDate === 'string') {
-      // Convertir a Date y luego a formato local (como lo hace la tabla)
-      const localDate = new Date(reservationDate);
-      const localDateString = localDate.toLocaleDateString('es-ES');
+  // Filtrar y ordenar reservas por la fecha seleccionada
+  const filteredReservations = reservations
+    .filter(reservation => {
+      if (!filterDate) return true; // Si no hay filtro, mostrar todas
       
-      // Convertir el filtro al mismo formato
-      const filterDateObj = new Date(filterDate);
-      const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+      // Manejar diferentes formatos de fecha
+      const reservationDate = reservation.date;
       
-      return localDateString === filterDateString;
-    }
-    
-    // Si es un objeto Date
-    if (reservationDate && typeof reservationDate === 'object' && 'toLocaleDateString' in reservationDate) {
-      const localDateString = (reservationDate as Date).toLocaleDateString('es-ES');
-      const filterDateObj = new Date(filterDate);
-      const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+      // Si reservation.date es un string en formato ISO, usar la misma lógica que la tabla
+      if (typeof reservationDate === 'string') {
+        // Convertir a Date y luego a formato local (como lo hace la tabla)
+        const localDate = new Date(reservationDate);
+        const localDateString = localDate.toLocaleDateString('es-ES');
+        
+        // Convertir el filtro al mismo formato
+        const filterDateObj = new Date(filterDate);
+        const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+        
+        return localDateString === filterDateString;
+      }
       
-      return localDateString === filterDateString;
-    }
-    
-    return false;
-  });
+      // Si es un objeto Date
+      if (reservationDate && typeof reservationDate === 'object' && 'toLocaleDateString' in reservationDate) {
+        const localDateString = (reservationDate as Date).toLocaleDateString('es-ES');
+        const filterDateObj = new Date(filterDate);
+        const filterDateString = filterDateObj.toLocaleDateString('es-ES');
+        
+        return localDateString === filterDateString;
+      }
+      
+      return false;
+    })
+    .sort((a, b) => {
+      // Primero ordenar por fecha
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const dateComparison = dateA.getTime() - dateB.getTime();
+      
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+      
+      // Si las fechas son iguales, ordenar por hora
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
+    });
 
   if (loading) {
     return <div className="text-center py-8">Cargando reservas...</div>;
