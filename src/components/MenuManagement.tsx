@@ -212,7 +212,7 @@ export function MenuManagement() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Añadir Item
+                Añadir Plato
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -311,7 +311,7 @@ export function MenuManagement() {
             {menuItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  No hay items en el menú
+                  No hay platos en el menú
                 </TableCell>
               </TableRow>
             ) : (
