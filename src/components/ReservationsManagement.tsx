@@ -170,16 +170,16 @@ export function ReservationsManagement() {
       return false;
     })
     .sort((a, b) => {
-      // Primero ordenar por fecha
+      // Primero ordenar por fecha (más reciente primero)
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
-      const dateComparison = dateA.getTime() - dateB.getTime();
+      const dateComparison = dateB.getTime() - dateA.getTime();
       
       if (dateComparison !== 0) {
         return dateComparison;
       }
       
-      // Si las fechas son iguales, ordenar por hora
+      // Si las fechas son iguales, ordenar por hora (más temprana a más tardía)
       const timeA = a.time || '00:00';
       const timeB = b.time || '00:00';
       return timeA.localeCompare(timeB);
