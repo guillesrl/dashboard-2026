@@ -17,7 +17,9 @@ export function ReservationsManagement() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [filterDate, setFilterDate] = useState(""); // Inicializar vacío para mostrar todas
+  // Establecer fecha actual por defecto en formato YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+  const [filterDate, setFilterDate] = useState(today);
   const [formData, setFormData] = useState({
     customer_name: "",
     customer_phone: "",
@@ -140,7 +142,7 @@ export function ReservationsManagement() {
   // Filtrar y ordenar reservas por la fecha seleccionada
   const filteredReservations = reservations
     .filter(reservation => {
-      if (!filterDate) return true; // Si no hay filtro, mostrar todas
+      // Siempre hay filtro, mostrar solo las del día seleccionado (por defecto hoy)
       
       // Manejar diferentes formatos de fecha
       const reservationDate = reservation.date;
