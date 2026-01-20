@@ -18,8 +18,8 @@ export function shouldFetchMenuItems(): boolean {
   const now = Date.now();
   const timeSinceLastFetch = now - globalApiState.lastFetchTime;
   
-  // Bloquear cualquier fetch por 30 segundos después del primero
-  if (timeSinceLastFetch < 30000 && !globalApiState.menuItemsFetched) {
+  // Bloquear cualquier fetch por 10 segundos después del primero
+  if (timeSinceLastFetch < 10000 && !globalApiState.menuItemsFetched) {
     globalApiState.menuItemsFetched = true;
     globalApiState.lastFetchTime = now;
     console.log('🟢 MenuItems fetch allowed', { timeSinceLastFetch, now });
@@ -33,8 +33,8 @@ export function shouldFetchOrders(): boolean {
   const now = Date.now();
   const timeSinceLastFetch = now - globalApiState.lastFetchTime;
   
-  // Bloquear cualquier fetch por 30 segundos después del primero
-  if (timeSinceLastFetch < 30000 && !globalApiState.ordersFetched) {
+  // Bloquear cualquier fetch por 10 segundos después del primero
+  if (timeSinceLastFetch < 10000 && !globalApiState.ordersFetched) {
     globalApiState.ordersFetched = true;
     globalApiState.lastFetchTime = now;
     console.log('🟢 Orders fetch allowed', { timeSinceLastFetch, now });
@@ -48,8 +48,8 @@ export function shouldFetchReservations(): boolean {
   const now = Date.now();
   const timeSinceLastFetch = now - globalApiState.lastFetchTime;
   
-  // Bloquear cualquier fetch por 30 segundos después del primero
-  if (timeSinceLastFetch < 30000 && !globalApiState.reservationsFetched) {
+  // Bloquear cualquier fetch por 10 segundos después del primero
+  if (timeSinceLastFetch < 10000 && !globalApiState.reservationsFetched) {
     globalApiState.reservationsFetched = true;
     globalApiState.lastFetchTime = now;
     console.log('🟢 Reservations fetch allowed', { timeSinceLastFetch, now });
