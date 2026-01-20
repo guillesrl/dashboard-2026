@@ -3,42 +3,59 @@ interface GlobalApiState {
   menuItemsFetched: boolean;
   ordersFetched: boolean;
   reservationsFetched: boolean;
+  lastFetchTime: number; // Timestamp del último fetch global
 }
 
 // Variable global real - persiste entre todos los renders
 const globalApiState: GlobalApiState = {
   menuItemsFetched: false,
   ordersFetched: false,
-  reservationsFetched: false
+  reservationsFetched: false,
+  lastFetchTime: 0
 };
 
 export function shouldFetchMenuItems(): boolean {
-  if (!globalApiState.menuItemsFetched) {
+  const now = Date.now();
+  const timeSinceLastFetch = now - globalApiState.lastFetchTime;
+  
+  // Bloquear cualquier fetch por 30 segundos después del primero
+  if (timeSinceLastFetch < 30000 && !globalApiState.menuItemsFetched) {
     globalApiState.menuItemsFetched = true;
-    console.log('🟢 MenuItems fetch allowed');
+    globalApiState.lastFetchTime = now;
+    console.log('🟢 MenuItems fetch allowed', { timeSinceLastFetch, now });
     return true;
   }
-  console.log('🔴 MenuItems fetch blocked');
+  console.log('🔴 MenuItems fetch blocked', { timeSinceLastFetch, now });
   return false;
 }
 
 export function shouldFetchOrders(): boolean {
-  if (!globalApiState.ordersFetched) {
+  const now = Date.now();
+  const timeSinceLastFetch = now - globalApiState.lastFetchTime;
+  
+  // Bloquear cualquier fetch por 30 segundos después del primero
+  if (timeSinceLastFetch < 30000 && !globalApiState.ordersFetched) {
     globalApiState.ordersFetched = true;
-    console.log('🟢 Orders fetch allowed');
+    globalApiState.lastFetchTime = now;
+    console.log('🟢 Orders fetch allowed', { timeSinceLastFetch, now });
     return true;
   }
-  console.log('🔴 Orders fetch blocked');
+  console.log('🔴 Orders fetch blocked', { timeSinceLastFetch, now });
   return false;
 }
 
 export function shouldFetchReservations(): boolean {
-  if (!globalApiState.reservationsFetched) {
+  const now = Date.now();
+  const timeSinceLastFetch = now - globalApiState.lastFetchTime;
+  
+  // Bloquear cualquier fetch por 30 segundos después del primero
+  if (timeSinceLastFetch < 30000 && !globalApiState.reservationsFetched) {
     globalApiState.reservationsFetched = true;
-    console.log('🟢 Reservations fetch allowed');
+    globalApiState.lastFetchTime = now;
+    console.log('🟢 Reservations fetch allowed', { timeSinceLastFetch, now });
     return true;
   }
-  console.log('🔴 Reservations fetch blocked');
+  console.log('🔴 Reservations fetch blocked', { timeSinceLastFetch, now });
   return false;
 }
 
@@ -46,6 +63,7 @@ export function resetApiState(): void {
   globalApiState.menuItemsFetched = false;
   globalApiState.ordersFetched = false;
   globalApiState.reservationsFetched = false;
+  globalApiState.lastFetchTime = 0;
   console.log('🔄 API state reset');
 }
 
