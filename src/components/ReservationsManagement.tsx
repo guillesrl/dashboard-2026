@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ReservationsService, Reservation } from "@/services/reservationsService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,7 @@ export function ReservationsManagement() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchReservations = async () => {
+  const fetchReservations = useCallback(async () => {
     try {
       const data = await ReservationsService.getAll();
       setReservations(data);
@@ -70,7 +70,7 @@ export function ReservationsManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

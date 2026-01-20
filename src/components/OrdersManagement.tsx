@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { MenuService } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,7 @@ export function OrdersManagement() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const data = await OrdersService.getAll();
       setOrders(data);
@@ -135,16 +135,16 @@ export function OrdersManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchMenuItems = async () => {
+  const fetchMenuItems = useCallback(async () => {
     try {
       const data = await MenuService.getAll();
       setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu items:', error);
     }
-  };
+  }, []);
 
   const handleAddItem = () => {
     if (!selectedItem || !quantity) return;
