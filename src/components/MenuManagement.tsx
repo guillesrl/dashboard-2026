@@ -29,6 +29,9 @@ export function MenuManagement() {
   const getCategoryBadge = (category: string | null) => {
     const normalizedCategory = category ? String(category).toLowerCase().trim() : '';
     
+    // Debug: mostrar qué categoría llega
+    console.log('Category debug:', { original: category, normalized: normalizedCategory });
+    
     const categoryStyles = {
       entrantes: 'bg-green-100 text-green-800 border-green-200',
       pescados: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -123,6 +126,7 @@ export function MenuManagement() {
   const fetchMenuItems = async () => {
     try {
       const data = await MenuService.getAll();
+      console.log('Menu items fetched:', data);
       setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu items:', error);
