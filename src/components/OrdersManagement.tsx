@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { MenuService } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,18 @@ import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 export function OrdersManagement() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     customer_name: "",
     customer_phone: "",
-    customer_email: "",
-    items: [] as OrderItem[]
+    items: [] as Array<{menu_item_id: number, quantity: number}>,
+    total: "",
+    status: "pending" as const,
+    notes: ""
   });
+  const isInitialized = useRef(false);
   const [selectedItem, setSelectedItem] = useState("");
   const [quantity, setQuantity] = useState("1");
 
@@ -101,6 +104,8 @@ export function OrdersManagement() {
   };
 
   useEffect(() => {
+    if (isInitialized.current) return;
+    
     // Auto-refresh cada 5 minutos (300000 ms)
     const interval = setInterval(() => {
       fetchOrders();
@@ -109,6 +114,8 @@ export function OrdersManagement() {
     // Llamadas iniciales
     fetchOrders();
     fetchMenuItems();
+    
+    isInitialized.current = true;
     
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);

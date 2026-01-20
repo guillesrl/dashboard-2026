@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ReservationsService, Reservation } from "@/services/reservationsService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export function ReservationsManagement() {
     status: "confirmed" as const,
     notes: ""
   });
+  const isInitialized = useRef(false);
   const isMobile = useIsMobile();
 
   const statusOptions = [
@@ -39,6 +40,8 @@ export function ReservationsManagement() {
   ];
 
   useEffect(() => {
+    if (isInitialized.current) return;
+    
     // Auto-refresh cada 5 minutos (300000 ms)
     const interval = setInterval(() => {
       fetchReservations();
@@ -46,6 +49,8 @@ export function ReservationsManagement() {
     
     // Llamada inicial
     fetchReservations();
+    
+    isInitialized.current = true;
     
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);
