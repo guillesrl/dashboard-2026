@@ -39,12 +39,13 @@ export function ReservationsManagement() {
   ];
 
   useEffect(() => {
-    fetchReservations();
-    
     // Auto-refresh cada 5 minutos (300000 ms)
     const interval = setInterval(() => {
       fetchReservations();
     }, 300000);
+    
+    // Llamada inicial
+    fetchReservations();
     
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);
