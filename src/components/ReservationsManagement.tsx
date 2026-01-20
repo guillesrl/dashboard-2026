@@ -42,9 +42,6 @@ export function ReservationsManagement() {
   ];
 
   useEffect(() => {
-    if (!shouldFetchReservations()) return;
-    
-    // Llamada inicial única - SIN AUTO-REFRESH
     fetchReservations();
   }, []);
 

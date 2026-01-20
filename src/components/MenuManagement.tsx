@@ -62,7 +62,7 @@ export function MenuManagement() {
     setFormData({
       name: item.name || "",
       price: item.price?.toString() || "",
-      category: item.category || "entrada",
+      category: item.category || "entrantes",
       description: item.description || "",
       stock: item.stock?.toString() || ""
     });
