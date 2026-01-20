@@ -8,10 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChefHat } from "lucide-react";
 import { apiCallManager } from "@/lib/apiCallManager";
-import { Badge } from "@/components/ui/badge";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
