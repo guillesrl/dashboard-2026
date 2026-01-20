@@ -106,19 +106,11 @@ export function OrdersManagement() {
   useEffect(() => {
     if (isInitialized.current) return;
     
-    // Auto-refresh cada 5 minutos (300000 ms)
-    const interval = setInterval(() => {
-      fetchOrders();
-    }, 300000);
-    
-    // Llamadas iniciales
+    // Llamadas iniciales únicas - SIN AUTO-REFRESH
     fetchOrders();
     fetchMenuItems();
     
     isInitialized.current = true;
-    
-    // Limpiar el interval cuando el componente se desmonte
-    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = useCallback(async () => {
