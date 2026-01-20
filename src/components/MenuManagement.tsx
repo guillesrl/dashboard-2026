@@ -21,7 +21,7 @@ export function MenuManagement() {
   const [formData, setFormData] = useState({
     name: "",
     price: "",
-    category: "entrada",
+    category: "entrantes",
     description: "",
     stock: ""
   });
@@ -117,9 +117,6 @@ export function MenuManagement() {
   };
 
   useEffect(() => {
-    if (!shouldFetchMenuItems()) return;
-    
-    // Llamada inicial única - SIN AUTO-REFRESH
     fetchMenuItems();
   }, []);
 
@@ -179,76 +176,12 @@ export function MenuManagement() {
     }
   };
 
-  const handleEdit = (item: MenuItem) => {
-    setEditingItem(item);
-    setFormData({
-      name: item.name || "",
-      price: item.price?.toString() || "",
-      category: item.category || "entrada",
-      description: item.description || "",
-      stock: item.stock?.toString() || ""
-    });
-    setDialogOpen(true);
-  };
-
-  const handleReset = () => {
-    resetApiState();
-    fetchMenuItems();
-    toast({
-      title: "Estado reiniciado",
-      description: "Se ha reiniciado el estado de carga de datos",
-    variant: "default"
-    });
-  };
-    if (!window.confirm("¿Estás seguro de eliminar este item?")) return;
-
-    try {
-      await MenuService.delete(id);
-      toast({
-        title: "Éxito",
-        description: "Item eliminado correctamente"
-      });
-      fetchMenuItems();
-    } catch (error) {
-      console.error('Error deleting item:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el item",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleStockUpdate = async (id: number, newStock: string) => {
-    try {
-      const stockNumber = parseInt(newStock);
-      await MenuService.updateStock(id, stockNumber);
-      
-      // Update local state immediately for better UX
-      setMenuItems(prevItems =>
-        prevItems.map(item =>
-          item.id === id ? { ...item, stock: stockNumber } : item
-        )
-      );
-
-      toast({
-        title: "Éxito",
-        description: "Stock actualizado correctamente"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el stock",
-        variant: "destructive"
-      });
-    }
-  };
 
   const resetForm = () => {
     setFormData({
       name: "",
       price: "",
-      category: "entrada",
+      category: "entrantes",
       description: "",
       stock: ""
     });
