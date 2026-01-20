@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { apiCallManager } from "@/lib/apiCallManager";
+import { shouldFetchOrders } from "@/lib/globalApiState";
 
 
 export function OrdersManagement() {
@@ -105,7 +106,7 @@ export function OrdersManagement() {
   };
 
   useEffect(() => {
-    if (!apiCallManager.shouldFetchOrders()) return;
+    if (!shouldFetchOrders()) return;
     
     // Llamadas iniciales únicas - SIN AUTO-REFRESH
     fetchOrders();

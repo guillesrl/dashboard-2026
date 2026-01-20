@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
 import { apiCallManager } from "@/lib/apiCallManager";
+import { shouldFetchMenuItems } from "@/lib/globalApiState";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -57,7 +58,7 @@ export function MenuManagement() {
   };
 
   useEffect(() => {
-    if (!apiCallManager.shouldFetchMenuItems()) return;
+    if (!shouldFetchMenuItems()) return;
     
     // Llamada inicial única - SIN AUTO-REFRESH
     fetchMenuItems();
