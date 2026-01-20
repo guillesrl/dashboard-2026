@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiCallManager } from "@/lib/apiCallManager";
+import { shouldFetchReservations } from "@/lib/globalApiState";
 
 
 export function ReservationsManagement() {
@@ -41,7 +42,7 @@ export function ReservationsManagement() {
   ];
 
   useEffect(() => {
-    if (!apiCallManager.shouldFetchReservations()) return;
+    if (!shouldFetchReservations()) return;
     
     // Llamada inicial única - SIN AUTO-REFRESH
     fetchReservations();
