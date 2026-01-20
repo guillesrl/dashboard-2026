@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MenuManagement } from "@/components/MenuManagement";
 import { OrdersManagement } from "@/components/OrdersManagement";
@@ -16,6 +16,11 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("menu");
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
+
+  // Memoizar componentes para evitar re-montajes al cambiar tabs
+  const MenuComponent = useMemo(() => <MenuManagement />, []);
+  const OrdersComponent = useMemo(() => <OrdersManagement />, []);
+  const ReservationsComponent = useMemo(() => <ReservationsManagement />, []);
   const [stats, setStats] = useState({
     totalSales: 0,
     monthlySales: 0,
@@ -209,15 +214,15 @@ const Index = () => {
               <div className="flex-1 flex flex-col pb-16">
                 <div className="flex-1 overflow-auto">
                   <TabsContent value="menu" className="mt-0 h-full">
-                    <MenuManagement />
+                    {MenuComponent}
                   </TabsContent>
 
                   <TabsContent value="orders" className="mt-0 h-full">
-                    <OrdersManagement />
+                    {OrdersComponent}
                   </TabsContent>
 
                   <TabsContent value="reservations" className="mt-0 h-full">
-                    <ReservationsManagement />
+                    {ReservationsComponent}
                   </TabsContent>
                 </div>
 
@@ -254,15 +259,15 @@ const Index = () => {
             {!isMobile && (
               <>
                 <TabsContent value="menu" className="space-y-4">
-                  <MenuManagement />
+                  {MenuComponent}
                 </TabsContent>
 
                 <TabsContent value="orders" className="space-y-4">
-                  <OrdersManagement />
+                  {OrdersComponent}
                 </TabsContent>
 
                 <TabsContent value="reservations" className="space-y-4">
-                  <ReservationsManagement />
+                  {ReservationsComponent}
                 </TabsContent>
               </>
             )}
