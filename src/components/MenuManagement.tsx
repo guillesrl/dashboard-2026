@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
-import type { CSSProperties } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MenuService, MenuItem } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
+import { toast } from "@/hooks/use-toast";
+import { Plus, Edit, Trash2, ChefHat } from "lucide-react";
+import { apiCallManager } from "@/lib/apiCallManager";
+import { Badge } from "@/components/ui/badge";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -58,15 +57,10 @@ export function MenuManagement() {
   };
 
   useEffect(() => {
+    if (!apiCallManager.shouldFetchMenuItems()) return;
+    
+    // Llamada inicial única - SIN AUTO-REFRESH
     fetchMenuItems();
-    
-    // Auto-refresh cada 5 minutos (300000 ms)
-    const interval = setInterval(() => {
-      fetchMenuItems();
-    }, 300000);
-    
-    // Limpiar el interval cuando el componente se desmonte
-    return () => clearInterval(interval);
   }, []);
 
   const fetchMenuItems = async () => {

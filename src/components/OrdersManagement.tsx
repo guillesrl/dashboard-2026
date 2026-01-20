@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { apiCallManager } from "@/lib/apiCallManager";
 
 
 export function OrdersManagement() {
@@ -104,13 +105,11 @@ export function OrdersManagement() {
   };
 
   useEffect(() => {
-    if (isInitialized.current) return;
+    if (!apiCallManager.shouldFetchOrders()) return;
     
     // Llamadas iniciales únicas - SIN AUTO-REFRESH
     fetchOrders();
     fetchMenuItems();
-    
-    isInitialized.current = true;
   }, []);
 
   const fetchOrders = useCallback(async () => {
