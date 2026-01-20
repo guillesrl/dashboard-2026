@@ -106,9 +106,6 @@ export function OrdersManagement() {
   };
 
   useEffect(() => {
-    if (!shouldFetchOrders()) return;
-    
-    // Llamadas iniciales únicas - SIN AUTO-REFRESH
     fetchOrders();
     fetchMenuItems();
   }, []);
