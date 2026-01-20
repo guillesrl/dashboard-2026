@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { apiCallManager } from "@/lib/apiCallManager";
 
 
 export function ReservationsManagement() {
@@ -40,12 +41,10 @@ export function ReservationsManagement() {
   ];
 
   useEffect(() => {
-    if (isInitialized.current) return;
+    if (!apiCallManager.shouldFetchReservations()) return;
     
     // Llamada inicial única - SIN AUTO-REFRESH
     fetchReservations();
-    
-    isInitialized.current = true;
   }, []);
 
   const fetchReservations = useCallback(async () => {
