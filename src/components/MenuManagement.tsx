@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
+import { Plus, Edit, Trash2, ChefHat, Pencil, X, RefreshCw } from "lucide-react";
 import { apiCallManager } from "@/lib/apiCallManager";
-import { shouldFetchMenuItems } from "@/lib/globalApiState";
+import { resetApiState } from "@/lib/globalApiState";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -40,11 +40,12 @@ export function MenuManagement() {
     };
 
     const categoryMap: Record<string, {key: keyof typeof categoryStyles, label: string}> = {
-      'entrante': { key: 'entrantes', label: 'Entrantes' },
-      'pescado': { key: 'pescados', label: 'Pescados' },
-      'pasta': { key: 'pastas', label: 'Pastas' },
-      'carne': { key: 'carnes', label: 'Carnes' },
-      'postre': { key: 'postres', label: 'Postres' },
+      entrantes: { key: 'entrantes', label: 'Entrantes' },
+      pescados: { key: 'pescados', label: 'Pescados' },
+      pastas: { key: 'pastas', label: 'Pastas' },
+      carnes: { key: 'carnes', label: 'Carnes' },
+      postres: { key: 'postres', label: 'Postres' },
+      default: { key: 'default', label: 'Default' }
     };
     
     const matchedCategory = categoryMap[normalizedCategory] || { key: 'default', label: 'Otro' };
@@ -63,6 +64,16 @@ export function MenuManagement() {
     // Llamada inicial única - SIN AUTO-REFRESH
     fetchMenuItems();
   }, []);
+
+  const handleReset = () => {
+    resetApiState();
+    fetchMenuItems();
+    toast({
+      title: "Estado reiniciado",
+      description: "Se ha reiniciado el estado de carga de datos",
+      variant: "default"
+    });
+  };
 
   const fetchMenuItems = async () => {
     try {
@@ -132,7 +143,15 @@ export function MenuManagement() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleReset = () => {
+    resetApiState();
+    fetchMenuItems();
+    toast({
+      title: "Estado reiniciado",
+      description: "Se ha reiniciado el estado de carga de datos",
+    variant: "default"
+    });
+  };
     if (!window.confirm("¿Estás seguro de eliminar este item?")) return;
 
     try {
