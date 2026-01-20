@@ -101,13 +101,14 @@ export function OrdersManagement() {
   };
 
   useEffect(() => {
-    fetchOrders();
-    fetchMenuItems();
-    
     // Auto-refresh cada 5 minutos (300000 ms)
     const interval = setInterval(() => {
       fetchOrders();
     }, 300000);
+    
+    // Llamadas iniciales
+    fetchOrders();
+    fetchMenuItems();
     
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);
