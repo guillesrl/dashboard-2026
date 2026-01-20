@@ -10,9 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ChefHat, Pencil, X, RefreshCw } from "lucide-react";
+import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
 import { apiCallManager } from "@/lib/apiCallManager";
-import { resetApiState } from "@/lib/globalApiState";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -58,22 +57,71 @@ export function MenuManagement() {
     );
   };
 
+  const handleEdit = (item: MenuItem) => {
+    setEditingItem(item);
+    setFormData({
+      name: item.name || "",
+      price: item.price?.toString() || "",
+      category: item.category || "entrada",
+      description: item.description || "",
+      stock: item.stock?.toString() || ""
+    });
+    setDialogOpen(true);
+  };
+
+  const handleStockUpdate = async (id: number, newStock: string) => {
+    try {
+      const stockNumber = parseInt(newStock);
+      await MenuService.updateStock(id, stockNumber);
+      
+      // Update local state immediately for better UX
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === id ? { ...item, stock: stockNumber } : item
+        )
+      );
+
+      toast({
+        title: "Éxito",
+        description: "Stock actualizado correctamente",
+        variant: "default"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el stock",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("¿Estás seguro de eliminar este item?")) return;
+    
+    try {
+      await MenuService.delete(id);
+      toast({
+        title: "Éxito",
+        description: "Item eliminado correctamente",
+        variant: "default"
+      });
+      fetchMenuItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el item",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     if (!shouldFetchMenuItems()) return;
     
     // Llamada inicial única - SIN AUTO-REFRESH
     fetchMenuItems();
   }, []);
-
-  const handleReset = () => {
-    resetApiState();
-    fetchMenuItems();
-    toast({
-      title: "Estado reiniciado",
-      description: "Se ha reiniciado el estado de carga de datos",
-      variant: "default"
-    });
-  };
 
   const fetchMenuItems = async () => {
     try {
