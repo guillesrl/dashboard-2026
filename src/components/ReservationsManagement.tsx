@@ -32,6 +32,7 @@ export function ReservationsManagement() {
   const isInitialized = useRef(false);
   const isMobile = useIsMobile();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const fetchInProgress = useRef(false);
 
   const statusOptions = [
     { value: "confirmed", label: "Confirmada", color: "bg-green-500" },
@@ -69,7 +70,7 @@ export function ReservationsManagement() {
       if (showLoading) setLoading(false);
       fetchInProgress.current = false;
     }
-  }, [fetchInProgress]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
