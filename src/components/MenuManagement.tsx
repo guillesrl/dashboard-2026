@@ -329,7 +329,7 @@ export function MenuManagement() {
                     <TableCell>
                       <Input
                         type="number"
-                        value={item.stock}
+                        value={item.stock ?? ""}
                         onChange={(e) => handleStockUpdate(item.id!, e.target.value)}
                         className="w-20 h-8 text-center"
                       />
