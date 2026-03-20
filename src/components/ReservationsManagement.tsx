@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { apiCallManager } from "@/lib/apiCallManager";
-import { shouldFetchReservations } from "@/lib/globalApiState";
 
 
 export function ReservationsManagement() {
@@ -33,6 +31,7 @@ export function ReservationsManagement() {
   });
   const isInitialized = useRef(false);
   const isMobile = useIsMobile();
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const statusOptions = [
     { value: "confirmed", label: "Confirmada", color: "bg-green-500" },
@@ -45,8 +44,18 @@ export function ReservationsManagement() {
     fetchReservations();
   }, []);
 
-  const fetchReservations = useCallback(async () => {
+  const fetchReservations = useCallback(async (showLoading = true) => {
+    // Evitar llamadas simultáneas
+    if (fetchInProgress.current) {
+      console.log('🔄 Fetch already in progress, skipping...');
+      return;
+    }
+
+    fetchInProgress.current = true;
+    if (showLoading) setLoading(true);
+
     try {
+      console.log('📊 Fetching reservations...');
       const data = await ReservationsService.getAll();
       setReservations(data);
     } catch (error) {
@@ -57,13 +66,14 @@ export function ReservationsManagement() {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
+      fetchInProgress.current = false;
     }
-  }, []);
+  }, [fetchInProgress]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const reservationData = {
         customer_name: formData.customer_name,
@@ -76,7 +86,7 @@ export function ReservationsManagement() {
       };
 
       await ReservationsService.create(reservationData);
-      
+
       toast({
         title: "Éxito",
         description: "Reserva creada correctamente"
@@ -84,7 +94,7 @@ export function ReservationsManagement() {
 
       setDialogOpen(false);
       resetForm();
-      fetchReservations();
+      await fetchReservations(false); // No mostrar loading
     } catch (error: any) {
       toast({
         title: "Error",
@@ -96,19 +106,40 @@ export function ReservationsManagement() {
 
   const updateReservationStatus = async (id: number, newStatus: Reservation['status']) => {
     try {
+      // Evitar múltiples clics en el mismo item
+      if (updatingId === id) return;
+
+      setUpdatingId(id);
       await ReservationsService.updateStatus(id, newStatus);
 
       toast({
         title: "Éxito",
         description: "Estado actualizado correctamente"
       });
-      fetchReservations();
+
+      // Actualizar optimistamente la UI antes de recargar
+      setReservations(prev =>
+        prev.map(res =>
+          res.id === id
+            ? { ...res, status: newStatus }
+            : res
+        )
+      );
+
+      // Recargar en background sin mostrar loading
+      setTimeout(async () => {
+        await fetchReservations(false);
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",
         variant: "destructive"
       });
+      // Recargar para restaurar estado original
+      fetchReservations(false);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
