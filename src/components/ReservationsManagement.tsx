@@ -12,10 +12,14 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+interface ReservationsManagementProps {
+  reservations: Reservation[];
+  onReservationUpdate?: () => void;
+}
 
-export function ReservationsManagement() {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ReservationsManagement({ reservations: initialReservations, onReservationUpdate }: ReservationsManagementProps) {
+  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+  const [loading, setLoading] = useState(!initialReservations || initialReservations.length === 0);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Establecer fecha actual por defecto en formato YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
@@ -34,6 +38,11 @@ export function ReservationsManagement() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const fetchInProgress = useRef(false);
 
+  // Sincronizar reservations cuando initialReservations cambie
+  useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
+
   const statusOptions = [
     { value: "confirmed", label: "Confirmada", color: "bg-green-500" },
     { value: "pending", label: "Pendiente", color: "bg-yellow-500" },
@@ -41,36 +50,7 @@ export function ReservationsManagement() {
     { value: "completed", label: "Completada", color: "bg-gray-500" }
   ];
 
-  useEffect(() => {
-    fetchReservations();
-  }, []);
-
-  const fetchReservations = useCallback(async (showLoading = true) => {
-    // Evitar llamadas simultáneas
-    if (fetchInProgress.current) {
-      console.log('🔄 Fetch already in progress, skipping...');
-      return;
-    }
-
-    fetchInProgress.current = true;
-    if (showLoading) setLoading(true);
-
-    try {
-      console.log('📊 Fetching reservations...');
-      const data = await ReservationsService.getAll();
-      setReservations(data);
-    } catch (error) {
-      console.error('Error fetching reservations:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las reservas",
-        variant: "destructive"
-      });
-    } finally {
-      if (showLoading) setLoading(false);
-      fetchInProgress.current = false;
-    }
-  }, []);
+  // Ya no fetchReservations local - se reciben como props from Index.tsx
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +75,8 @@ export function ReservationsManagement() {
 
       setDialogOpen(false);
       resetForm();
-      await fetchReservations(false); // No mostrar loading
+      // Notificar al padre para recargar
+      onReservationUpdate?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -118,7 +99,7 @@ export function ReservationsManagement() {
         description: "Estado actualizado correctamente"
       });
 
-      // Actualizar optimistamente la UI antes de recargar
+      // Actualizar optimistamente la UI
       setReservations(prev =>
         prev.map(res =>
           res.id === id
@@ -127,9 +108,9 @@ export function ReservationsManagement() {
         )
       );
 
-      // Recargar en background sin mostrar loading
-      setTimeout(async () => {
-        await fetchReservations(false);
+      // Notificar al padre para recargar en background
+      setTimeout(() => {
+        onReservationUpdate?.();
       }, 500);
     } catch (error: any) {
       toast({
@@ -137,8 +118,8 @@ export function ReservationsManagement() {
         description: "No se pudo actualizar el estado",
         variant: "destructive"
       });
-      // Recargar para restaurar estado original
-      fetchReservations(false);
+      // Notificar al padre para recargar y restaurar estado
+      onReservationUpdate?.();
     } finally {
       setUpdatingId(null);
     }
