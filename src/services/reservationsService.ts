@@ -14,14 +14,57 @@ export interface Reservation {
   updated_at?: string;
 }
 
+// Cache y locking a nivel de clase
+let reservationCache: Reservation[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 5000; // 5 segundos de cache
+let fetchLock: Promise<Reservation[]> | null = null;
+
 export class ReservationsService {
-  // Obtener todas las reservas
+  // Obtener todas las reservas (con cache y locking)
   static async getAll(): Promise<Reservation[]> {
-    const response = await api.getReservations();
-    if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch reservations');
+    const now = Date.now();
+
+    // Si hay una petición en curso, esperar a que termine
+    if (fetchLock) {
+      console.log('🔄 Waiting for ongoing fetch...');
+      return await fetchLock;
     }
-    return response.data;
+
+    // Si el cache es válido, devolverlo directamente
+    if (reservationCache && (now - cacheTimestamp) < CACHE_TTL) {
+      console.log('✅ Returning cached reservations');
+      return reservationCache;
+    }
+
+    // Crear nueva promesa y guardarla en el lock
+    fetchLock = (async () => {
+      try {
+        console.log('📊 Enviando reservas...');
+        const response = await api.getReservations();
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error || 'Failed to fetch reservations');
+        }
+
+        // Actualizar cache
+        reservationCache = response.data;
+        cacheTimestamp = Date.now();
+
+        return reservationCache;
+      } finally {
+        // Liberar lock
+        fetchLock = null;
+      }
+    })();
+
+    return await fetchLock;
+  }
+
+  // Limpiar cache (llamar después de crear/actualizar/eliminar)
+  static clearCache() {
+    reservationCache = null;
+    cacheTimestamp = 0;
   }
 
   // Obtener reserva por ID
@@ -36,6 +79,7 @@ export class ReservationsService {
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to create reservation');
     }
+    this.clearCache();
     return response.data;
   }
 
@@ -45,6 +89,7 @@ export class ReservationsService {
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to update reservation');
     }
+    this.clearCache();
     return response.data;
   }
 
@@ -54,6 +99,7 @@ export class ReservationsService {
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete reservation');
     }
+    this.clearCache();
     return true;
   }
 
@@ -63,6 +109,7 @@ export class ReservationsService {
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to update reservation status');
     }
+    this.clearCache();
     return response.data;
   }
 
