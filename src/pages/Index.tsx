@@ -10,7 +10,7 @@ import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MenuService } from "@/services/menuService";
 import { OrdersService } from "@/services/ordersService";
-import { ReservationsService } from "@/services/reservationsService";
+import { ReservationsService, Reservation } from "@/services/reservationsService";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("menu");
@@ -20,7 +20,7 @@ const Index = () => {
   // Memoizar componentes para evitar re-montajes al cambiar tabs
   const MenuComponent = useMemo(() => <MenuManagement />, []);
   const OrdersComponent = useMemo(() => <OrdersManagement />, []);
-  const ReservationsComponent = useMemo(() => <ReservationsManagement />, []);
+
   const [stats, setStats] = useState({
     totalSales: 0,
     monthlySales: 0,
@@ -31,15 +31,18 @@ const Index = () => {
     menuItems: 0,
     unavailableItems: 0,
   });
+  const [allReservations, setAllReservations] = useState<Reservation[]>([]);
 
   useEffect(() => {
     loadStats();
-    
+    loadReservations();
+
     // Auto-refresh cada 1 minuto (60000 ms)
     const interval = setInterval(() => {
       loadStats();
+      loadReservations();
     }, 60000);
-    
+
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);
   }, []);
@@ -73,17 +76,17 @@ const Index = () => {
       const monthlyOrdersData = await OrdersService.getThisMonth();
       const activeOrdersData = await OrdersService.getActive();
 
-      // Get today's reservations
+      // Get today's reservations (usando cache)
       const todayReservations = await ReservationsService.getToday();
       const monthlyReservationsData = await ReservationsService.getThisMonth();
 
       // Calculate total sales from today's orders
       const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
-      
+
       // Calculate monthly sales and orders
       const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
       const monthlyOrders = monthlyOrdersData.length;
-      
+
       // Count all active orders (not delivered or cancelled)
       const activeOrders = activeOrdersData.length;
 
@@ -99,6 +102,15 @@ const Index = () => {
       });
     } catch (error) {
       console.error('Error loading stats:', error);
+    }
+  };
+
+  const loadReservations = async () => {
+    try {
+      const reservations = await ReservationsService.getAll();
+      setAllReservations(reservations);
+    } catch (error) {
+      console.error('Error loading reservations:', error);
     }
   };
 
@@ -222,7 +234,10 @@ const Index = () => {
                   </TabsContent>
 
                   <TabsContent value="reservations" className="mt-0 h-full">
-                    {ReservationsComponent}
+                    <ReservationsManagement
+                      reservations={allReservations}
+                      onReservationUpdate={loadReservations}
+                    />
                   </TabsContent>
                 </div>
 
@@ -267,7 +282,10 @@ const Index = () => {
                 </TabsContent>
 
                 <TabsContent value="reservations" className="space-y-4">
-                  {ReservationsComponent}
+                  <ReservationsManagement
+                    reservations={allReservations}
+                    onReservationUpdate={loadReservations}
+                  />
                 </TabsContent>
               </>
             )}
