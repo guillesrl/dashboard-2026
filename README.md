@@ -6,9 +6,11 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 
 - **Gestión de Menú**: CRUD completo para items del menú con categorías y stock
 - **Gestión de Pedidos**: Sistema de pedidos con estados y seguimiento
-- **Gestión de Reservas**: Sistema de reservas con filtro por fecha
-- **Base de Datos**: PostgreSQL para almacenamiento persistente
+- **Gestión de Reservas**: Sistema de reservas con filtro por fecha y actualización en tiempo real
+- **Base de Datos**: Supabase (PostgreSQL) para almacenamiento persistente
 - **Interfaz Moderna**: React + TypeScript + Tailwind CSS + shadcn/ui
+- **Auto-refresh**: Dashboard se actualiza automáticamente cada 1 minuto
+- **Server-side Rendering**: Express sirve tanto API como frontend estático
 
 ## 🛠️ Tecnologías
 
@@ -19,22 +21,20 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **Tailwind CSS** - Framework de estilos
 - **shadcn/ui** - Componentes UI
 - **Lucide React** - Iconos
+- **React Query** - Gestión de estado del servidor
 
 ### Backend
-- **Node.js** - Runtime del servidor
-- **Express.js** - Framework web
-- **PostgreSQL** - Base de datos
-- **pg** - Cliente PostgreSQL para Node.js
+- **Node.js 20+** - Runtime del servidor
+- **Express.js 5** - Framework web
+- **Supabase** - Base de datos PostgreSQL como servicio
+- **@supabase/supabase-js** - Cliente oficial de Supabase
 - **CORS** - Habilitar peticiones cross-origin
-- **Vite** - Build tool y servidor de desarrollo
-- **@vitejs/plugin-react-swc** - Plugin React para Vite
-- **lovable-tagger** - Etiquetado de componentes
-- **autoprefixer** - Procesamiento CSS con PostCSS
+- **dotenv** - Gestión de variables de entorno
 
 ## 📋 Requisitos Previos
 
-- Node.js 18+ 
-- PostgreSQL 12+
+- Node.js 20+ (Node.js 18 está deprecated para Supabase)
+- Cuenta en Supabase (proyecto configurado)
 - npm o yarn
 
 ## 🚀 Instalación y Configuración
@@ -42,7 +42,7 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 ### 1. Clonar el repositorio
 ```bash
 git clone <repository-url>
-cd restaurant-dashboard
+cd dashboard-2026
 ```
 
 ### 2. Instalar dependencias
@@ -53,26 +53,73 @@ npm install
 ### 3. Configurar variables de entorno
 Crear archivo `.env` con:
 ```env
-# Configuración PostgreSQL
-DATABASE_URL=postgres://usuario:password@host:5432/database?sslmode=disable
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=restaurant_db
-DB_USER=postgres
-DB_PASSWORD=tu_password
-DB_SSL=false
-
-# Configuración API
+# Configuración Supabase
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 VITE_API_URL=/api
+
+# Servidor
+PORT=8080
+NODE_ENV=development
 ```
 
-### 4. Configurar base de datos
-```bash
-# Crear base de datos
-createdb restaurant_db
+**Nota**: Para EasyPanel, usa el archivo `.env.production` con las mismas variables.
 
-# Crear tablas (opcional - el servidor las crea automáticamente)
-psql -d restaurant_db -f setup-tables.sql
+### 4. Base de Datos
+El proyecto usa Supabase. Asegúrate de que tu proyecto Supabase tenga las siguientes tablas:
+
+#### Tabla `menu`
+```sql
+CREATE TABLE menu (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    ingredientes TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    categoria VARCHAR(100) NOT NULL,
+    stock INTEGER DEFAULT 0,
+    vegetariano VARCHAR(10) DEFAULT 'no',
+    gluten VARCHAR(10) DEFAULT 'no',
+    marisco VARCHAR(10) DEFAULT 'no',
+    lactosa VARCHAR(10) DEFAULT 'no',
+    vegano VARCHAR(10) DEFAULT 'no',
+    available BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### Tabla `orders`
+```sql
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    telefono VARCHAR(50),
+    direccion VARCHAR(255) DEFAULT 'Dirección no especificada',
+    items JSONB NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    time VARCHAR(10),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### Tabla `reservations`
+```sql
+CREATE TABLE reservations (
+    id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    people INTEGER NOT NULL,
+    table_number INTEGER,
+    status VARCHAR(50) DEFAULT 'confirmed',
+    google_event_id VARCHAR(255),
+    observations TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
 ## 🏃‍♂️ Ejecutar la Aplicación
@@ -87,23 +134,23 @@ npm run dev:full
 # Terminal 1: Backend
 npm run server
 
-# Terminal 2: Frontend  
+# Terminal 2: Frontend
 npm run dev
 ```
 
 ### Opción 3: Producción
 ```bash
 npm run build
-npm run preview
+npm start
 ```
 
-## 🚀 Deploy en EasyPanel (Configuración Unificada)
+## 🚀 Deploy en EasyPanel
 
 Este proyecto está configurado para correr en **un solo servicio** (recomendado):
 
 - **Servidor Unificado**: Express maneja tanto la API (`/api/*`) como el frontend estático
 - **Sin proxy necesario**: Todo corre en el mismo puerto
-- **Base de Datos**: PostgreSQL para almacenamiento persistente
+- **Base de Datos**: Supabase en la nube
 
 ### Build Command
 ```bash
@@ -119,13 +166,14 @@ npm start
 ### Variables de entorno (EasyPanel)
 
 ```env
-# Base de Datos
-DATABASE_URL=postgres://postgres:River035@n8n_postgres:5432/postgres?sslmode=disable
-DB_SSL=false
-
-# Servidor
+# Supabase
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 PORT=80
 NODE_ENV=production
+
+# Opcional: forzar versión de Node.js
+NODE_VERSION=20
 ```
 
 ### Estructura del Servidor
@@ -133,7 +181,7 @@ NODE_ENV=production
 - **API Endpoints**: `/api/*` - manejados por Express
 - **Frontend**: Archivos estáticos servidos desde `/dist`
 - **Health Check**: `/api/health` - para verificar estado del servidor
-- **DB Health Check**: `/api/db-health` - para verificar conexión a PostgreSQL
+- **DB Health Check**: `/api/db-health` - para verificar conexión a Supabase
 
 ## 📡 API Endpoints
 
@@ -155,88 +203,51 @@ NODE_ENV=production
 - `PUT /api/reservations/:id` - Actualizar reserva
 - `DELETE /api/reservations/:id` - Eliminar reserva
 
-## 🗄️ Estructura de la Base de Datos
+## 🔧 Configuración Avanzada
 
-### Tabla `menu`
-```sql
-CREATE TABLE menu (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255) NOT NULL,
-    descripcion TEXT,
-    precio DECIMAL(10,2) NOT NULL,
-    categoria VARCHAR(100) NOT NULL,
-    stock INTEGER DEFAULT 0,
-    disponible BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
+### Auto-refresh
+El dashboard se actualiza automáticamente cada 60 segundos. Para cambiar la frecuencia, edita `src/pages/Index.tsx`:
+```typescript
+const interval = setInterval(() => {
+  loadStats();
+  loadReservations();
+}, 60000); // Cambiar a milisegundos deseados
 ```
 
-### Tabla `orders`
-```sql
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255) NOT NULL,
-    telefono VARCHAR(50),
-    direccion VARCHAR(255),
-    items JSONB NOT NULL,
-    total DECIMAL(10,2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-```
+### Cache de Reservas
+El servicio de reservas incluye cache en memoria con TTL de 5 segundos para optimizar el rendimiento y evitar llamadas API duplicadas.
 
-### Tabla `reservations`
-```sql
-CREATE TABLE reservations (
-    id SERIAL PRIMARY KEY,
-    customer_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) NOT NULL,
-    date DATE NOT NULL,
-    time TIME NOT NULL,
-    people INTEGER NOT NULL,
-    table_number INTEGER,
-    status VARCHAR(50) DEFAULT 'confirmed',
-    google_event_id VARCHAR(255),
-    observations TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-## 🔧 Configuración
-
-### Servidor
-- `server-original.js` - Servidor principal con mapeo de columnas español → inglés
-
-### Scripts Útiles
-```bash
-npm run dev          # Iniciar frontend
-npm run server       # Iniciar backend (server-original.js)
-npm run dev:full     # Iniciar ambos simultáneamente
-npm run build        # Build para producción
-npm start            # Iniciar servidor unificado (producción)
-```
+### Variables de Entorno Soportadas
+- `PORT`: Puerto del servidor (default: 80 en producción, 8080 en desarrollo)
+- `NODE_ENV`: Entorno (development/production)
+- `VITE_SUPABASE_URL`: URL del proyecto Supabase
+- `VITE_SUPABASE_ANON_KEY`: Clave anónima de Supabase
+- `VITE_API_URL`: URL base de la API (default: `/api`)
 
 ## 🐛 Troubleshooting
 
-### Error de conexión a PostgreSQL
-- Verifica que PostgreSQL esté corriendo
-- Confirma las credenciales en las variables de entorno
-- Asegúrate que la base de datos exista
+### Error de conexión a Supabase
+- Verifica que `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` estén configuradas correctamente
+- Confirma que las tablas existan en tu proyecto Supabase
 
-### Error "require is not defined"
-- El proyecto usa ES modules (`"type": "module"` en package.json)
-- Usa `import` en lugar de `require`
+### Error "Node.js 18 and below are deprecated"
+- Usa Node.js 20 o superior
+- En EasyPanel, agrega `.nvmrc` con `20` o configura `NODE_VERSION=20`
+
+### Error "Cannot GET /"
+- Asegúrate de haber ejecutado `npm run build` para generar la carpeta `/dist`
+- Verifica que el comando de inicio en producción sea `npm start`
+
+### Error de Express 5 con rutas wildcard
+- El proyecto usa `app.get(/^\/(?!api\/).*/, ...)` en lugar de `app.get('*')` para compatibilidad con Express 5
 
 ### Puerto en uso
 - El servidor unificado usa el puerto configurado en `PORT` (default: 80)
 - En desarrollo usa el puerto que asigne Vite (usualmente 5173)
 
-### Error de Express 5 con rutas wildcard
-- El proyecto usa `app.use()` en lugar de `app.get('*')` para compatibilidad
-- Esto resuelve el error "Missing parameter name"
+### Logs duplicados
+- Se implementó cache y locking en `ReservationsService` para prevenir llamadas simultáneas
+- Las reservas se cargan centralizadamente en `Index.tsx` para evitar duplicados
 
 ## 📝 Notas de Desarrollo
 
@@ -245,6 +256,8 @@ npm start            # Iniciar servidor unificado (producción)
 - La API sigue formato RESTful
 - Las fechas se manejan con timezone local
 - El filtro de reservas maneja correctamente zonas horarias
+- El servidor Express sirve tanto API como frontend (SPA routing)
+- To update dependencies, use `npm update` and check for breaking changes
 
 ## 🤝 Contribuir
 
