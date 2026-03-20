@@ -38,8 +38,8 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(distPath));
 
   // Para cualquier ruta que no sea API, servir index.html (SPA routing)
-  // Usamos ruta con parámetro para compatibilidad con Express 5
-  app.get('/{path*}', (req, res) => {
+  // Usamos regex para compatibilidad con Express 5
+  app.get(/^\/(?!api\/).*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
