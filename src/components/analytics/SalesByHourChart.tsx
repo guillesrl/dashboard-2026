@@ -1,19 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Definimos el tipo de dato
+// Definimos el tipo de dato para ventas por día
 export interface SalesData {
-  hour: string;
+  date: string;
   sales: number;
 }
 
 const SalesByHourChart: React.FC = () => {
   const { data, isLoading, error } = useQuery<SalesData[]>({
-    queryKey: ['salesByHour'],
+    queryKey: ['salesByDay'],
     queryFn: async () => {
       const res = await fetch('/api/analytics/sales-by-hour');
       if (!res.ok) {
-        throw new Error('Error al obtener datos de ventas por hora');
+        throw new Error('Error al obtener datos de ventas mensuales');
       }
       return res.json();
     },
@@ -22,13 +22,22 @@ const SalesByHourChart: React.FC = () => {
   if (isLoading) return <div>Cargando...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
+  // Extraer solo el día para mostrar en el eje X (1, 2, 3...)
+  const chartData = data?.map(item => ({
+    ...item,
+    day: new Date(item.date).getDate().toString()
+  })) || [];
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+      <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="hour" />
+        <XAxis dataKey="day" />
         <YAxis />
-        <Tooltip />
+        <Tooltip
+          labelFormatter={(value) => `Día ${value}`}
+          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Ventas']}
+        />
         <Line
           type="monotone"
           dataKey="sales"
