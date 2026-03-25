@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
-import { apiCallManager } from "@/lib/apiCallManager";
 
 export function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { parseNumber } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MenuManagement } from "@/components/MenuManagement";
 import { OrdersManagement } from "@/components/OrdersManagement";
@@ -47,17 +48,6 @@ const Index = () => {
     // Limpiar el interval cuando el componente se desmonte
     return () => clearInterval(interval);
   }, []);
-
-  // Función para parsear números que pueden tener coma o punto decimal (formato europeo vs americano)
-  const parseNumber = (value: string | number | null | undefined): number => {
-    if (value === null || value === undefined || value === '') return 0;
-    if (typeof value === 'number') return value;
-
-    // Convertir a string y reemplazar coma por punto para parsear correctamente
-    const stringValue = String(value).replace(',', '.');
-    const parsed = parseFloat(stringValue);
-    return isNaN(parsed) ? 0 : parsed;
-  };
 
   const loadStats = async () => {
     try {

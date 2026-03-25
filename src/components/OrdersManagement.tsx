@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { MenuService } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { apiCallManager } from "@/lib/apiCallManager";
-import { shouldFetchOrders } from "@/lib/globalApiState";
+import { parseNumber } from "@/lib/utils";
 
 
 export function OrdersManagement() {
@@ -110,7 +109,7 @@ export function OrdersManagement() {
     fetchMenuItems();
   }, []);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = async () => {
     try {
       const data = await OrdersService.getAll();
       setOrders(data);
@@ -124,16 +123,16 @@ export function OrdersManagement() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const fetchMenuItems = useCallback(async () => {
+  const fetchMenuItems = async () => {
     try {
       const data = await MenuService.getAll();
       setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu items:', error);
     }
-  }, []);
+  };
 
   const handleAddItem = () => {
     if (!selectedItem || !quantity) return;
@@ -258,16 +257,6 @@ export function OrdersManagement() {
       case 'cancelled': return <XCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
-  };
-
-  const parseNumber = (value: string | number | null | undefined): number => {
-    if (value === null || value === undefined || value === '') return 0;
-    if (typeof value === 'number') return value;
-
-    // Convertir a string y reemplazar coma por punto para parsear correctamente
-    const stringValue = String(value).replace(',', '.');
-    const parsed = parseFloat(stringValue);
-    return isNaN(parsed) ? 0 : parsed;
   };
 
   if (loading) {
