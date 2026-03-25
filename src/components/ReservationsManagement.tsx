@@ -39,6 +39,8 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
   // Sincronizar reservations cuando initialReservations cambie
   useEffect(() => {
     setReservations(initialReservations);
+    // Actualizar loading: false cuando initialReservations tenga datos (incluso si está vacío, significa que la consulta ya se completó)
+    setLoading(false);
   }, [initialReservations]);
 
   const statusOptions = [
