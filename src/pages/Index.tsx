@@ -4,13 +4,14 @@ import { MenuManagement } from "@/components/MenuManagement";
 import { OrdersManagement } from "@/components/OrdersManagement";
 import { ReservationsManagement } from "@/components/ReservationsManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun } from "lucide-react";
+import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MenuService } from "@/services/menuService";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService, Reservation } from "@/services/reservationsService";
+import AnalyticsPage from "./dashboard/analytics";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("menu");
@@ -205,7 +206,7 @@ const Index = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 h-full">
             {/* Desktop: Tabs normal arriba */}
             {!isMobile && (
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="menu" className="flex items-center gap-2">
                   <ChefHat className="h-4 w-4" />
                   Menú
@@ -217,6 +218,10 @@ const Index = () => {
                 <TabsTrigger value="reservations" className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Reservas
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Analíticas
                 </TabsTrigger>
               </TabsList>
             )}
@@ -239,31 +244,42 @@ const Index = () => {
                       onReservationUpdate={loadReservations}
                     />
                   </TabsContent>
+
+                  <TabsContent value="analytics" className="mt-0 h-full">
+                    <AnalyticsPage />
+                  </TabsContent>
                 </div>
 
                 {/* Barra de navegación inferior fija para móviles */}
                 <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
-                  <TabsList className="grid w-full grid-cols-3 h-16 rounded-none border-0 bg-transparent">
-                    <TabsTrigger 
-                      value="menu" 
+                  <TabsList className="grid w-full grid-cols-4 h-16 rounded-none border-0 bg-transparent">
+                    <TabsTrigger
+                      value="menu"
                       className="flex flex-col items-center gap-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
                     >
                       <ChefHat className="h-5 w-5" />
                       <span className="text-xs">Menú</span>
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="orders" 
+                    <TabsTrigger
+                      value="orders"
                       className="flex flex-col items-center gap-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
                     >
                       <ShoppingCart className="h-5 w-5" />
                       <span className="text-xs">Pedidos</span>
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="reservations" 
+                    <TabsTrigger
+                      value="reservations"
                       className="flex flex-col items-center gap-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
                     >
                       <Calendar className="h-5 w-5" />
                       <span className="text-xs">Reservas</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="analytics"
+                      className="flex flex-col items-center gap-1 h-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                    >
+                      <BarChart3 className="h-5 w-5" />
+                      <span className="text-xs">Analíticas</span>
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -286,6 +302,10 @@ const Index = () => {
                     reservations={allReservations}
                     onReservationUpdate={loadReservations}
                   />
+                </TabsContent>
+
+                <TabsContent value="analytics" className="space-y-4">
+                    <AnalyticsPage />
                 </TabsContent>
               </>
             )}

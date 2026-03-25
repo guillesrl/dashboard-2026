@@ -66,8 +66,32 @@ app.get('/api/db-health', async (req, res) => {
   }
 });
 
-// ============================================
-// MENU ENDPOINTS
+app.get('/api/analytics/sales-by-hour', async (req, res) => {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('created_at, total')
+      .not('total', 'is', null);
+
+    if (error) throw error;
+
+    const salesByHour = Array(24).fill(0).map((_, i) => ({
+      hour: `${i.toString().padStart(2, '0')}:00`,
+      sales: 0
+    }));
+
+    orders.forEach(order => {
+      const hour = new Date(order.created_at).getHours();
+      salesByHour[hour].sales += parseFloat(order.total);
+    });
+
+    res.json(salesByHour);
+  } catch (error) {
+    console.error('❌ Error en GET /api/analytics/sales-by-hour:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ============================================
 
 app.get('/api/menu', async (req, res) => {
