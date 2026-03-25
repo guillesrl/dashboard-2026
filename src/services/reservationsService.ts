@@ -27,20 +27,20 @@ export class ReservationsService {
 
     // Si hay una petición en curso, esperar a que termine
     if (fetchLock) {
-      console.log('🔄 Waiting for ongoing fetch...');
+      console.log('🔄 Esperando a que termine la petición en curso...');
       return await fetchLock;
     }
 
     // Si el cache es válido, devolverlo directamente
     if (reservationCache && (now - cacheTimestamp) < CACHE_TTL) {
-      console.log('✅ Returning cached reservations');
+      console.log('✅ Devolviendo reservas desde caché');
       return reservationCache;
     }
 
     // Crear nueva promesa y guardarla en el lock
     fetchLock = (async () => {
       try {
-        console.log('📊 Enviando reservas...');
+        console.log('📊 Enviando petición de reservas...');
         const response = await api.getReservations();
 
         if (!response.success || !response.data) {
@@ -61,7 +61,7 @@ export class ReservationsService {
     return await fetchLock;
   }
 
-  // Limpiar cache (llamar después de crear/actualizar/eliminar)
+  // Limpiar caché (llamar después de crear/actualizar/eliminar)
   static clearCache() {
     reservationCache = null;
     cacheTimestamp = 0;
@@ -149,7 +149,7 @@ export class ReservationsService {
   static async checkAvailability(date: string, time: string): Promise<boolean> {
     const reservations = await this.getAll();
     const confirmedReservations = reservations.filter(reservation => reservation.status === 'confirmed');
-    
+
     // Permitir máximo 10 reservas confirmadas por día (ajustar según tu capacidad)
     const maxReservationsPerDay = 10;
     return confirmedReservations.filter(reservation => reservation.date === date).length < maxReservationsPerDay;
