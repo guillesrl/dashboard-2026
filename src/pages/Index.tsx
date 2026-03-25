@@ -51,34 +51,34 @@ const Index = () => {
 
   const loadStats = async () => {
     try {
-      // Get menu items
+      // Obtener items del menú
       const menuData = await MenuService.getAll();
 
-      // Count total menu items and unavailable items
+      // Contar total de items del menú y no disponibles
       const itemsWithPrice = menuData.filter(item => item.price && item.price > 0);
       const menuCount = itemsWithPrice.length;
       const unavailableItems = itemsWithPrice.filter(item => {
         return item.stock < 1 || !item.available;
       }).length;
 
-      // Get all orders
+      // Obtener todos los pedidos
       const ordersData = await OrdersService.getAll();
       const todayOrders = await OrdersService.getToday();
       const monthlyOrdersData = await OrdersService.getThisMonth();
       const activeOrdersData = await OrdersService.getActive();
 
-      // Get today's reservations (usando cache)
+      // Obtener reservas de hoy (usando cache)
       const todayReservations = await ReservationsService.getToday();
       const monthlyReservationsData = await ReservationsService.getThisMonth();
 
-      // Calculate total sales from today's orders
+      // Calcular ventas totales de los pedidos de hoy
       const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
 
-      // Calculate monthly sales and orders
+      // Calcular ventas y pedidos mensuales
       const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
       const monthlyOrders = monthlyOrdersData.length;
 
-      // Count all active orders (not delivered or cancelled)
+      // Contar todos los pedidos activos (no entregados o cancelados)
       const activeOrders = activeOrdersData.length;
 
       setStats({
@@ -92,7 +92,7 @@ const Index = () => {
         unavailableItems: unavailableItems,
       });
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('Error cargando estadísticas:', error);
     }
   };
 
