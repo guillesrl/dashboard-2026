@@ -10,6 +10,7 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **Base de Datos**: Supabase (PostgreSQL) para almacenamiento persistente
 - **Interfaz Moderna**: React + TypeScript + Tailwind CSS + shadcn/ui
 - **Auto-refresh**: Dashboard se actualiza automáticamente cada 1 minuto
+- **Analíticas**: Sección de gráficas para ventas por hora
 - **Server-side Rendering**: Express sirve tanto API como frontend estático
 
 ## 🛠️ Tecnologías
@@ -197,11 +198,8 @@ NODE_VERSION=20
 - `PUT /api/orders/:id` - Actualizar pedido
 - `PATCH /api/orders/:id/status` - Cambiar estado
 
-### Reservas
-- `GET /api/reservations` - Obtener todas las reservas
-- `POST /api/reservations` - Crear nueva reserva
-- `PUT /api/reservations/:id` - Actualizar reserva
-- `DELETE /api/reservations/:id` - Eliminar reserva
+### Analíticas
+- `GET /api/analytics/sales-by-hour` - Obtener ventas totales desglosadas por hora
 
 ## 🔧 Configuración Avanzada
 
