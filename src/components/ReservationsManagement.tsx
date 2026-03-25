@@ -143,9 +143,20 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
     }
   };
 
-  // Filtrar y ordenar reservas por la fecha seleccionada
+  // Filtrar y ordenar reservas:
+  // - Si filterDate tiene valor, filtrar por esa fecha exacta
+  // - Si filterDate está vacío, mostrar solo reservas de hoy en adelante (futuras)
   const filteredReservations = reservations
-    .filter(reservation => !filterDate || reservation.date === filterDate)
+    .filter(reservation => {
+      if (filterDate) {
+        // Modo filtro específico por fecha seleccionada
+        return reservation.date === filterDate;
+      } else {
+        // Modo por defecto: mostrar solo reservas de hoy en adelante
+        const today = new Date().toISOString().split('T')[0];
+        return reservation.date >= today;
+      }
+    })
     .sort((a, b) => {
       // Ordenar por fecha (más reciente primero)
       const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
