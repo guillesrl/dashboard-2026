@@ -15,8 +15,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 80;
 
-console.log('🚀 Starting server with Supabase...');
-
 // Configurar Supabase cliente
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -27,6 +25,84 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Helper functions para mapeo de datos
+const mapMenuItem = (item) => ({
+  id: item.id,
+  name: item.nombre,
+  description: item.ingredientes,
+  price: item.precio,
+  category: item.categoria,
+  stock: item.stock,
+  available: item.stock > 0,
+  vegetariano: item.vegetariano,
+  gluten: item.gluten,
+  marisco: item.marisco,
+  lactosa: item.lactosa,
+  vegano: item.vegano,
+  ingredientes: item.ingredientes,
+  created_at: item.created_at,
+  updated_at: item.updated_at
+});
+
+const mapOrder = (item) => {
+  let correctedTime = item.time;
+  let formattedDateTime = null;
+
+  if (item.time) {
+    if (item.time.length === 5 && item.time.includes(':')) {
+      correctedTime = item.time;
+    } else if (item.time.length === 4 && item.time.includes(':')) {
+      correctedTime = '0' + item.time;
+    }
+
+    const date = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    formattedDateTime = `${date} ${correctedTime}`;
+  } else if (item.created_at) {
+    formattedDateTime = new Date(item.created_at).toISOString().replace('T', ' ').substring(0, 19);
+    correctedTime = new Date(item.created_at).toTimeString().substring(0, 5);
+  }
+
+  return {
+    id: item.id,
+    customer_name: item.nombre,
+    customer_phone: item.telefono,
+    customer_email: null,
+    items: typeof item.items === 'string' ? JSON.parse(item.items) : item.items,
+    total: parseFloat(item.total),
+    status: item.status,
+    notes: null,
+    created_at: item.created_at,
+    time: correctedTime,
+    order_datetime: formattedDateTime,
+    updated_at: item.updated_at
+  };
+};
+
+const mapReservation = (item, formatTime = false) => {
+  const mapped = {
+    id: item.id,
+    customer_name: item.customer_name,
+    phone: item.phone,
+    customer_email: null,
+    date: item.date,
+    time: item.time,
+    guests: item.people,
+    table_number: item.table_number,
+    status: item.status,
+    google_event_id: item.google_event_id,
+    notes: item.observations,
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  };
+
+  // Formatear tiempo solo si se solicita (para POST donde puede ser TIME type)
+  if (formatTime && mapped.time) {
+    mapped.time = mapped.time.toString().substring(0, 5);
+  }
+
+  return mapped;
+};
 
 // Middleware
 app.use(cors());
@@ -103,23 +179,7 @@ app.get('/api/menu', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedData = (data || []).map(item => ({
-      id: item.id,
-      name: item.nombre,
-      description: item.ingredientes,
-      price: item.precio,
-      category: item.categoria,
-      stock: item.stock,
-      available: item.stock > 0,
-      vegetariano: item.vegetariano,
-      gluten: item.gluten,
-      marisco: item.marisco,
-      lactosa: item.lactosa,
-      vegano: item.vegano,
-      ingredientes: item.ingredientes,
-      created_at: item.created_at,
-      updated_at: item.updated_at
-    }));
+    const mappedData = (data || []).map(mapMenuItem);
 
     res.json({ success: true, data: mappedData });
   } catch (error) {
@@ -164,23 +224,7 @@ app.post('/api/menu', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedItem = {
-      id: data.id,
-      name: data.nombre,
-      description: data.ingredientes,
-      price: data.precio,
-      category: data.categoria,
-      stock: data.stock,
-      available: data.stock > 0,
-      vegetariano: data.vegetariano,
-      gluten: data.gluten,
-      marisco: data.marisco,
-      lactosa: data.lactosa,
-      vegano: data.vegano,
-      ingredientes: data.ingredientes,
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    };
+    const mappedItem = mapMenuItem(data);
 
     res.json({ success: true, data: mappedItem });
   } catch (error) {
@@ -228,23 +272,7 @@ app.put('/api/menu/:id', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedItem = {
-      id: data.id,
-      name: data.nombre,
-      description: data.ingredientes,
-      price: data.precio,
-      category: data.categoria,
-      stock: data.stock,
-      available: data.stock > 0,
-      vegetariano: data.vegetariano,
-      gluten: data.gluten,
-      marisco: data.marisco,
-      lactosa: data.lactosa,
-      vegano: data.vegano,
-      ingredientes: data.ingredientes,
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    };
+    const mappedItem = mapMenuItem(data);
 
     res.json({ success: true, data: mappedItem });
   } catch (error) {
@@ -307,39 +335,7 @@ app.get('/api/orders', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedData = (data || []).map(item => {
-      let correctedTime = item.time;
-      let formattedDateTime = null;
-
-      if (item.time) {
-        if (item.time.length === 5 && item.time.includes(':')) {
-          correctedTime = item.time;
-        } else if (item.time.length === 4 && item.time.includes(':')) {
-          correctedTime = '0' + item.time;
-        }
-
-        const date = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-        formattedDateTime = `${date} ${correctedTime}`;
-      } else if (item.created_at) {
-        formattedDateTime = new Date(item.created_at).toISOString().replace('T', ' ').substring(0, 19);
-        correctedTime = new Date(item.created_at).toTimeString().substring(0, 5);
-      }
-
-      return {
-        id: item.id,
-        customer_name: item.nombre,
-        customer_phone: item.telefono,
-        customer_email: null,
-        items: typeof item.items === 'string' ? JSON.parse(item.items) : item.items,
-        total: parseFloat(item.total),
-        status: item.status,
-        notes: null,
-        created_at: item.created_at,
-        time: correctedTime,
-        order_datetime: formattedDateTime,
-        updated_at: item.updated_at
-      };
-    });
+    const mappedData = (data || []).map(mapOrder);
 
     res.json({ success: true, data: mappedData });
   } catch (error) {
@@ -367,19 +363,7 @@ app.post('/api/orders', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedItem = {
-      id: data.id,
-      customer_name: data.nombre,
-      customer_phone: data.telefono,
-      customer_email: null,
-      items: typeof data.items === 'string' ? JSON.parse(data.items) : data.items,
-      total: parseFloat(data.total),
-      status: data.status,
-      notes: null,
-      created_at: data.created_at,
-      time: data.time,
-      updated_at: data.updated_at
-    };
+    const mappedItem = mapOrder(data);
 
     res.json({ success: true, data: mappedItem });
   } catch (error) {
@@ -446,23 +430,8 @@ app.get('/api/reservations', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedData = (data || []).map(item => ({
-      id: item.id,
-      customer_name: item.customer_name,
-      phone: item.phone,
-      customer_email: null,
-      date: item.date,
-      time: item.time,
-      guests: item.people,
-      table_number: item.table_number,
-      status: item.status,
-      google_event_id: item.google_event_id,
-      notes: item.observations,
-      created_at: item.created_at,
-      updated_at: item.updated_at
-    }));
+    const mappedData = (data || []).map(mapReservation);
 
-    console.log(`📊 Enviando ${mappedData.length} reservas`);
     res.json({ success: true, data: mappedData });
   } catch (error) {
     console.error('❌ Error en GET /api/reservations:', error.message);
@@ -491,21 +460,7 @@ app.post('/api/reservations', async (req, res) => {
 
     if (error) throw error;
 
-    const mappedItem = {
-      id: data.id,
-      customer_name: data.customer_name,
-      phone: data.phone,
-      customer_email: null,
-      date: data.date,
-      time: data.time ? data.time.toString().substring(0, 5) : data.time,
-      guests: data.people,
-      table_number: data.table_number,
-      status: data.status,
-      google_event_id: data.google_event_id,
-      notes: data.observations,
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    };
+    const mappedItem = mapReservation(data, true); // true = formatear tiempo
 
     res.json({ success: true, data: mappedItem });
   } catch (error) {
@@ -536,21 +491,7 @@ app.patch('/api/reservations/:id/status', async (req, res) => {
       throw error;
     }
 
-    const mappedItem = {
-      id: data.id,
-      customer_name: data.customer_name,
-      customer_phone: data.phone,
-      customer_email: data.customer_email,
-      date: data.date,
-      time: data.time,
-      guests: data.people,
-      table_number: data.table_number,
-      status: data.status,
-      google_event_id: data.google_event_id,
-      notes: data.observations,
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    };
+    const mappedItem = mapReservation(data);
 
     res.json({ success: true, data: mappedItem });
   } catch (error) {

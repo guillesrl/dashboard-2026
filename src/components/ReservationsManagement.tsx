@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ReservationsService, Reservation } from "@/services/reservationsService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,8 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
     status: "confirmed" as const,
     notes: ""
   });
-  const isInitialized = useRef(false);
   const isMobile = useIsMobile();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const fetchInProgress = useRef(false);
 
   // Sincronizar reservations cuando initialReservations cambie
   useEffect(() => {
@@ -49,8 +47,6 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
     { value: "cancelled", label: "Cancelada", color: "bg-red-500" },
     { value: "completed", label: "Completada", color: "bg-gray-500" }
   ];
-
-  // Ya no fetchReservations local - se reciben como props from Index.tsx
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,50 +145,13 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
 
   // Filtrar y ordenar reservas por la fecha seleccionada
   const filteredReservations = reservations
-    .filter(reservation => {
-      // Siempre hay filtro, mostrar solo las del día seleccionado (por defecto hoy)
-      
-      // Manejar diferentes formatos de fecha
-      const reservationDate = reservation.date;
-      
-      // Si reservation.date es un string en formato ISO, usar la misma lógica que la tabla
-      if (typeof reservationDate === 'string') {
-        // Convertir a Date y luego a formato local (como lo hace la tabla)
-        const localDate = new Date(reservationDate);
-        const localDateString = localDate.toLocaleDateString('es-ES');
-        
-        // Convertir el filtro al mismo formato
-        const filterDateObj = new Date(filterDate);
-        const filterDateString = filterDateObj.toLocaleDateString('es-ES');
-        
-        return localDateString === filterDateString;
-      }
-      
-      // Si es un objeto Date
-      if (reservationDate && typeof reservationDate === 'object' && 'toLocaleDateString' in reservationDate) {
-        const localDateString = (reservationDate as Date).toLocaleDateString('es-ES');
-        const filterDateObj = new Date(filterDate);
-        const filterDateString = filterDateObj.toLocaleDateString('es-ES');
-        
-        return localDateString === filterDateString;
-      }
-      
-      return false;
-    })
+    .filter(reservation => reservation.date === filterDate)
     .sort((a, b) => {
-      // Primero ordenar por fecha (más reciente primero)
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      const dateComparison = dateB.getTime() - dateA.getTime();
-      
-      if (dateComparison !== 0) {
-        return dateComparison;
-      }
-      
+      // Ordenar por fecha (más reciente primero)
+      const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateComparison !== 0) return dateComparison;
       // Si las fechas son iguales, ordenar por hora (más temprana a más tardía)
-      const timeA = a.time || '00:00';
-      const timeB = b.time || '00:00';
-      return timeA.localeCompare(timeB);
+      return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
 
   if (loading) {
@@ -355,7 +314,7 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
                     </div>
                   </TableCell>
                   <TableCell>
-                    {reservation.notes || '-'}
+                    {reservation.table_number || '-'}
                   </TableCell>
                   <TableCell>
                     {reservation.customer_phone && (
