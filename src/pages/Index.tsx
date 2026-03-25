@@ -15,7 +15,7 @@ import { ReservationsService, Reservation } from "@/services/reservationsService
 import AnalyticsPage from "./dashboard/analytics";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("menu");
+  const [activeTab, setActiveTab] = useState("reservations");
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
 
