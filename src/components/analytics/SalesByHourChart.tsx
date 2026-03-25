@@ -7,7 +7,7 @@ export interface SalesData {
   sales: number;
 }
 
-export const SalesByHourChart: React.FC = () => {
+const SalesByHourChart: React.FC = () => {
   const { data, isLoading, error } = useQuery<SalesData[]>({
     queryKey: ['salesByHour'],
     queryFn: async () => {
@@ -40,3 +40,5 @@ export const SalesByHourChart: React.FC = () => {
     </ResponsiveContainer>
   );
 };
+
+export default SalesByHourChart;
