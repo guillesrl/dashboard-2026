@@ -151,17 +151,33 @@ app.get('/api/analytics/sales-by-hour', async (req, res) => {
 
     if (error) throw error;
 
-    const salesByHour = Array(24).fill(0).map((_, i) => ({
-      hour: `${i.toString().padStart(2, '0')}:00`,
-      sales: 0
-    }));
+    // Obtener mes y año actual
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
-    orders.forEach(order => {
-      const hour = new Date(order.created_at).getHours();
-      salesByHour[hour].sales += parseFloat(order.total);
+    // Filtrar órdenes del mes actual
+    const currentMonthOrders = (orders || []).filter(order => {
+      const orderDate = new Date(order.created_at);
+      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
     });
 
-    res.json(salesByHour);
+    // Crear array de días del mes actual
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const salesByDay = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return { date: dateStr, sales: 0 };
+    });
+
+    // Sumar ventas por día
+    currentMonthOrders.forEach(order => {
+      const orderDate = new Date(order.created_at);
+      const day = orderDate.getDate();
+      salesByDay[day - 1].sales += parseFloat(order.total);
+    });
+
+    res.json(salesByDay);
   } catch (error) {
     console.error('❌ Error en GET /api/analytics/sales-by-hour:', error.message);
     res.status(500).json({ success: false, error: error.message });
