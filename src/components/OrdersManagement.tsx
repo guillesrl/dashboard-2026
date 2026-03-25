@@ -27,7 +27,6 @@ export function OrdersManagement() {
     status: "pending" as const,
     notes: ""
   });
-  const isInitialized = useRef(false);
   const [selectedItem, setSelectedItem] = useState("");
   const [quantity, setQuantity] = useState("1");
 
