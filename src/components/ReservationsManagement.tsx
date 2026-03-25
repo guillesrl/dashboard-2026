@@ -23,7 +23,7 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
   const [dialogOpen, setDialogOpen] = useState(false);
   // Establecer fecha actual por defecto en formato YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
-  const [filterDate, setFilterDate] = useState(today);
+  const [filterDate, setFilterDate] = useState("");
   const [formData, setFormData] = useState({
     customer_name: "",
     customer_phone: "",
@@ -145,7 +145,7 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
 
   // Filtrar y ordenar reservas por la fecha seleccionada
   const filteredReservations = reservations
-    .filter(reservation => reservation.date === filterDate)
+    .filter(reservation => !filterDate || reservation.date === filterDate)
     .sort((a, b) => {
       // Ordenar por fecha (más reciente primero)
       const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
