@@ -23,6 +23,8 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **shadcn/ui** - Componentes UI
 - **Lucide React** - Iconos
 - **React Query** - Gestión de estado del servidor
+- **Vitest + Testing Library** - Tests unitarios y de componentes
+- **ErrorBoundary** - Captura de errores en árbol de componentes
 
 ### Backend
 - **Node.js 20+** - Runtime del servidor
