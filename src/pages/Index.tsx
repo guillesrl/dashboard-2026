@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { parseNumber } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MenuManagement } from "@/components/MenuManagement";
-import { OrdersManagement } from "@/components/OrdersManagement";
-import { ReservationsManagement } from "@/components/ReservationsManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -12,7 +10,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MenuService } from "@/services/menuService";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService, Reservation } from "@/services/reservationsService";
-import AnalyticsPage from "./dashboard/analytics";
+
+const MenuManagement = lazy(() => import("@/components/MenuManagement").then(m => ({ default: m.MenuManagement })));
+const OrdersManagement = lazy(() => import("@/components/OrdersManagement").then(m => ({ default: m.OrdersManagement })));
+const ReservationsManagement = lazy(() => import("@/components/ReservationsManagement").then(m => ({ default: m.ReservationsManagement })));
+const AnalyticsPage = lazy(() => import("./dashboard/analytics"));
+
+const TabLoader = () => (
+  <div className="space-y-4 p-4">
+    <Skeleton className="h-10 w-full" />
+    <Skeleton className="h-48 w-full" />
+    <Skeleton className="h-48 w-full" />
+  </div>
+);
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("reservations");
@@ -221,22 +231,24 @@ const Index = () => {
               <div className="flex-1 flex flex-col pb-16">
                 <div className="flex-1 overflow-auto">
                   <TabsContent value="menu" className="mt-0 h-full">
-                    <MenuManagement />
+                    <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
                   </TabsContent>
 
                   <TabsContent value="orders" className="space-y-4">
-                    <OrdersManagement />
+                    <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
                   </TabsContent>
 
                   <TabsContent value="reservations" className="mt-0 h-full">
-                    <ReservationsManagement
-                      reservations={allReservations}
-                      onReservationUpdate={loadReservations}
-                    />
+                    <Suspense fallback={<TabLoader />}>
+                      <ReservationsManagement
+                        reservations={allReservations}
+                        onReservationUpdate={loadReservations}
+                      />
+                    </Suspense>
                   </TabsContent>
 
                   <TabsContent value="analytics" className="mt-0 h-full">
-                    <AnalyticsPage />
+                    <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
                   </TabsContent>
                 </div>
 
@@ -280,22 +292,24 @@ const Index = () => {
             {!isMobile && (
               <>
                 <TabsContent value="menu" className="space-y-4">
-                  <MenuManagement />
+                  <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
                 </TabsContent>
 
                 <TabsContent value="orders" className="space-y-4">
-                  <OrdersManagement />
+                  <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
                 </TabsContent>
 
                 <TabsContent value="reservations" className="space-y-4">
-                  <ReservationsManagement
-                    reservations={allReservations}
-                    onReservationUpdate={loadReservations}
-                  />
+                  <Suspense fallback={<TabLoader />}>
+                    <ReservationsManagement
+                      reservations={allReservations}
+                      onReservationUpdate={loadReservations}
+                    />
+                  </Suspense>
                 </TabsContent>
 
                 <TabsContent value="analytics" className="space-y-4">
-                    <AnalyticsPage />
+                  <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
                 </TabsContent>
               </>
             )}
