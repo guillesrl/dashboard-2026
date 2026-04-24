@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { parseNumber } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MenuManagement } from "@/components/MenuManagement";
@@ -18,10 +18,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("reservations");
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
-
-  // Memoizar componentes para evitar re-montajes al cambiar tabs
-  const MenuComponent = useMemo(() => <MenuManagement />, []);
-  const OrdersComponent = useMemo(() => <OrdersManagement />, []);
 
   const [stats, setStats] = useState({
     totalSales: 0,
@@ -221,11 +217,11 @@ const Index = () => {
               <div className="flex-1 flex flex-col pb-16">
                 <div className="flex-1 overflow-auto">
                   <TabsContent value="menu" className="mt-0 h-full">
-                    {MenuComponent}
+                    <MenuManagement />
                   </TabsContent>
 
                   <TabsContent value="orders" className="space-y-4">
-                    {OrdersComponent}
+                    <OrdersManagement />
                   </TabsContent>
 
                   <TabsContent value="reservations" className="mt-0 h-full">
@@ -280,11 +276,11 @@ const Index = () => {
             {!isMobile && (
               <>
                 <TabsContent value="menu" className="space-y-4">
-                  {MenuComponent}
+                  <MenuManagement />
                 </TabsContent>
 
                 <TabsContent value="orders" className="space-y-4">
-                  {OrdersComponent}
+                  <OrdersManagement />
                 </TabsContent>
 
                 <TabsContent value="reservations" className="space-y-4">
