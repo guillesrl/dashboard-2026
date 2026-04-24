@@ -21,7 +21,6 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [loading, setLoading] = useState(!initialReservations || initialReservations.length === 0);
   const [dialogOpen, setDialogOpen] = useState(false);
-  // Establecer fecha actual por defecto en formato YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState("");
   const [formData, setFormData] = useState({
@@ -155,7 +154,6 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
         return reservation.date === filterDate;
       } else {
         // Modo por defecto: mostrar solo reservas de hoy en adelante
-        const today = new Date().toISOString().split('T')[0];
         return reservation.date >= today;
       }
     })
