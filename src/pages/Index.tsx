@@ -129,10 +129,14 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Stats Overview - Ocultar en móvil para dar más espacio al contenido */}
-        <div className={`container mx-auto px-4 py-6 ${isMobile ? 'hidden' : ''}`}>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
+        {/* Stats Overview - scroll horizontal en móvil, grid en desktop */}
+        <div className="py-4 md:py-6">
+          <div className={
+            isMobile
+              ? "flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory"
+              : "container mx-auto px-4 grid gap-4 md:grid-cols-4"
+          }>
+            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Ventas Hoy</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -145,7 +149,7 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pedidos Activos</CardTitle>
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -158,7 +162,7 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Reservas Hoy</CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +175,7 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Platos del Menú</CardTitle>
                 <ChefHat className="h-4 w-4 text-muted-foreground" />
