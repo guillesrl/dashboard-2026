@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { MenuService } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { parseNumber } from "@/lib/utils";
 
 
-export function OrdersManagement() {
+function OrdersManagementComponent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,7 @@ export function OrdersManagement() {
   const [formData, setFormData] = useState({
     customer_name: "",
     customer_phone: "",
+    customer_email: "",
     items: [] as Array<{menu_item_id: number, quantity: number}>,
     total: "",
     status: "pending" as const,
@@ -241,7 +242,10 @@ export function OrdersManagement() {
       customer_name: "",
       customer_phone: "",
       customer_email: "",
-      items: []
+      items: [],
+      total: "",
+      status: "pending",
+      notes: ""
     });
     setSelectedItem("");
     setQuantity("1");
@@ -465,3 +469,5 @@ export function OrdersManagement() {
     </Card>
   );
 }
+
+export const OrdersManagement = memo(OrdersManagementComponent);

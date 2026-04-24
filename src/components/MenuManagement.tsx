@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { MenuService, MenuItem } from "@/services/menuService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
 
-export function MenuManagement() {
+function MenuManagementComponent() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -362,3 +362,5 @@ export function MenuManagement() {
     </Card>
   );
 }
+
+export const MenuManagement = memo(MenuManagementComponent);
