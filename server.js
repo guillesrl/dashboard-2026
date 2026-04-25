@@ -1,6 +1,9 @@
 // Servidor Node.js con Express para la API REST usando Supabase
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -104,9 +107,35 @@ const mapReservation = (item, formatTime = false) => {
   return mapped;
 };
 
-// Middleware
+// Security middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// Request logging
+app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 200, // 200 requests por ventana
+  message: { success: false, error: 'Too many requests, please try again later.' }
+});
+app.use('/api/', limiter);
+
+// Async handler helper
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {
