@@ -139,62 +139,58 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Stats Overview - scroll horizontal en móvil, grid en desktop */}
-        <div className="py-4 md:py-6">
-          <div className={
-            isMobile
-              ? "flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory"
-              : "container mx-auto px-4 grid gap-4 md:grid-cols-4"
-          }>
-            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ventas Hoy</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        {/* Stats Overview - 2x2 en móvil, 4 columnas en desktop */}
+        <div className="py-3 md:py-6">
+          <div className="grid grid-cols-2 gap-2 px-4 md:grid-cols-4 md:gap-4 md:container md:mx-auto">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                <CardTitle className="text-xs md:text-sm font-medium">Ventas Hoy</CardTitle>
+                <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${stats.totalSales.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground">Total de pedidos del día</p>
-                <div className="mt-2 pt-2 border-t">
-                  <div className="text-sm font-semibold text-muted-foreground">Mes: ${stats.monthlySales.toFixed(2)}</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-lg md:text-2xl font-bold">${stats.totalSales.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground leading-tight">Pedidos del día</p>
+                <div className="mt-1.5 pt-1.5 border-t md:mt-2 md:pt-2">
+                  <div className="text-xs md:text-sm font-semibold text-muted-foreground">Mes: ${stats.monthlySales.toFixed(2)}</div>
                 </div>
               </CardContent>
             </Card>
-            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pedidos Activos</CardTitle>
-                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                <CardTitle className="text-xs md:text-sm font-medium">Pedidos Activos</CardTitle>
+                <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.activeOrders}</div>
-                <p className="text-xs text-muted-foreground">Pendientes de entrega</p>
-                <div className="mt-2 pt-2 border-t">
-                  <div className="text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyOrders} pedidos</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-lg md:text-2xl font-bold">{stats.activeOrders}</div>
+                <p className="text-xs text-muted-foreground leading-tight">Pendientes de entrega</p>
+                <div className="mt-1.5 pt-1.5 border-t md:mt-2 md:pt-2">
+                  <div className="text-xs md:text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyOrders} pedidos</div>
                 </div>
               </CardContent>
             </Card>
-            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Reservas Hoy</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                <CardTitle className="text-xs md:text-sm font-medium">Reservas Hoy</CardTitle>
+                <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.todayReservations}</div>
-                <p className="text-xs text-muted-foreground">Reservas confirmadas</p>
-                <div className="mt-2 pt-2 border-t">
-                  <div className="text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyReservations} reservas</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-lg md:text-2xl font-bold">{stats.todayReservations}</div>
+                <p className="text-xs text-muted-foreground leading-tight">Reservas confirmadas</p>
+                <div className="mt-1.5 pt-1.5 border-t md:mt-2 md:pt-2">
+                  <div className="text-xs md:text-sm font-semibold text-muted-foreground">Mes: {stats.monthlyReservations} reservas</div>
                 </div>
               </CardContent>
             </Card>
-            <Card className={isMobile ? "min-w-[200px] snap-start flex-shrink-0" : ""}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Platos del Menú</CardTitle>
-                <ChefHat className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                <CardTitle className="text-xs md:text-sm font-medium">Platos del Menú</CardTitle>
+                <ChefHat className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.menuItems}</div>
-                <p className="text-xs text-muted-foreground">Total de platos disponibles</p>
-                <div className="mt-2 pt-2 border-t">
-                  <div className="text-sm font-semibold text-muted-foreground">No disponibles: {stats.unavailableItems}</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-lg md:text-2xl font-bold">{stats.menuItems}</div>
+                <p className="text-xs text-muted-foreground leading-tight">Platos disponibles</p>
+                <div className="mt-1.5 pt-1.5 border-t md:mt-2 md:pt-2">
+                  <div className="text-xs md:text-sm font-semibold text-muted-foreground">No disponibles: {stats.unavailableItems}</div>
                 </div>
               </CardContent>
             </Card>
