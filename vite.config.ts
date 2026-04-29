@@ -2,10 +2,19 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(async ({ mode }) => {
+  const visualizerPlugin = mode === "analyze"
+    ? (await import("rollup-plugin-visualizer")).visualizer({
+        filename: "dist/stats.html",
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      })
+    : null;
+
+  return {
   test: {
     environment: 'jsdom',
     globals: true,
@@ -29,12 +38,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    mode === "analyze" && visualizer({
-      filename: "dist/stats.html",
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    visualizerPlugin,
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -43,9 +47,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
-  },
-  optimizeDeps: {
-    include: ['pg'],
   },
   build: {
     rollupOptions: {
@@ -77,4 +78,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+  };
+});
