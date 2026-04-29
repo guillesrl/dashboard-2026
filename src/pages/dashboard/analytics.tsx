@@ -17,19 +17,19 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pedidos por estado</CardTitle>
+            <CardTitle className="text-base">Top 5 platos más vendidos</CardTitle>
           </CardHeader>
           <CardContent>
-            <OrdersByStatusChart />
+            <TopDishesChart />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top 5 platos más vendidos</CardTitle>
+            <CardTitle className="text-base">Pedidos por estado</CardTitle>
           </CardHeader>
           <CardContent>
-            <TopDishesChart />
+            <OrdersByStatusChart />
           </CardContent>
         </Card>
 
