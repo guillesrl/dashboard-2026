@@ -179,6 +179,14 @@ NODE_ENV=production
 NODE_VERSION=20
 ```
 
+### Notas sobre el build con Nixpacks (EasyPanel)
+
+- EasyPanel usa Nixpacks que genera un Dockerfile automáticamente con Node 20.18.1 y npm 10.8.2.
+- `NODE_ENV=production` hace que `npm ci` omita las devDependencies, por lo que ningún devDependency puede ser importado estáticamente en `vite.config.ts`.
+- `rollup-plugin-visualizer` (solo para análisis local con `npm run analyze`) se importa de forma dinámica para evitar este error.
+- El archivo `.npmrc` incluye `legacy-peer-deps=true` para que npm v10 no falle por conflictos de peer dependencies entre `vitest@4.x` y `vite@5.x`.
+- Los módulos nativos (`sqlite3`, `pg`) no deben incluirse en las dependencias si no se usan: requieren herramientas de compilación (python, g++, make) ausentes en la imagen.
+
 ### Estructura del Servidor
 
 - **API Endpoints**: `/api/*` - manejados por Express
@@ -233,6 +241,11 @@ El servicio de reservas incluye cache en memoria con TTL de 5 segundos para opti
 ### Error "Node.js 18 and below are deprecated"
 - Usa Node.js 20 o superior
 - En EasyPanel, agrega `.nvmrc` con `20` o configura `NODE_VERSION=20`
+
+### Error `npm ci` en Docker: "Missing from lock file" o módulo no encontrado
+- Si aparece "Cannot find package X" durante el build, verificar que X no sea devDependency importada estáticamente en `vite.config.ts` (ver nota Nixpacks arriba).
+- Si aparece "Missing: esbuild@X.X.X from lock file", el lockfile está desincronizado con las peer deps. Verificar `.npmrc` tiene `legacy-peer-deps=true`.
+- Módulos con compilación nativa (sqlite3, pg, etc.) fallan en Docker si no se usan: eliminarlos de `package.json`.
 
 ### Error "Cannot GET /"
 - Asegúrate de haber ejecutado `npm run build` para generar la carpeta `/dist`
