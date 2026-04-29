@@ -17,15 +17,6 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Ventas por día (mes actual)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SalesByHourChart />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle className="text-base">Pedidos por estado</CardTitle>
           </CardHeader>
           <CardContent>
@@ -48,6 +39,15 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <ReservationsVsOrdersChart />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Ventas por día (mes actual)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesByHourChart />
           </CardContent>
         </Card>
       </div>
