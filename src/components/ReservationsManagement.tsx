@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Reservation } from "@/services/reservationsService";
 import { useCreateReservation, useUpdateReservationStatus } from "@/hooks/use-queries";
+import { exportReservationsToPDF, exportReservationsToExcel } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle, FileDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationsManagementProps {
@@ -150,6 +151,14 @@ export function ReservationsManagement({ reservations }: ReservationsManagementP
             <CardDescription>Administra las reservas</CardDescription>
           </div>
           <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => exportReservationsToPDF(reservations, 'Reporte de Reservas')}>
+                <FileDown className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportReservationsToExcel(reservations, 'Reporte de Reservas')}>
+                <FileDown className="h-4 w-4" />
+              </Button>
+            </div>
             <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
               <Label htmlFor="filterDate" className="whitespace-nowrap">Filtrar por fecha:</Label>
               <Input
