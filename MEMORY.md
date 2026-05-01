@@ -9,3 +9,13 @@
 - **Tarea**: Últimos cambios
 - **Herramientas**: bash
 - **Resultado**: Últimos 3 commits:  - 1df8feb: stats en scroll horizontal para mobile - b3057bf: 3 gráficos nuevos (OrdersByStatus, ReservationsVsOrders, TopDishes) + fix variable duplicada - 6306428: reemplazo useMemo por React.memo + fix resetForm  9 archivos modificados, +330 líneas. Los gráficos de analíticas s
+
+## 2026-04-25 17:26
+- **Tarea**: alguna mejora para este proyecto?
+- **Herramientas**: lectura de archivos, búsqueda de contenido, bash, editor
+- **Resultado**: Subido.
+
+## 2026-05-01 19:45
+- **Tarea**: Crees tu que hacer está mejora es necesario? Unificar el fetching de datos con React Query. Hoy solo SalesByHourChart lo
+- **Herramientas**: lectura de archivos
+- **Resultado**: Sí, es una mejora muy recomendable. Ahora mismo tienes:  - Auto-refresh manual cada 60s en Index.tsx (trae datos aunque no hayan cambiado) - Cache custom en ReservationsService con TTL de 5s y fetch locking (código extra que React Query resuelve nativamente) - MenuService y OrdersService sin cache, 

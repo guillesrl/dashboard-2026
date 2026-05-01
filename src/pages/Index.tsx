@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, Suspense, lazy, useMemo } from "react";
 import { parseNumber } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,7 @@ import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun, BarChart3 } fro
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MenuService } from "@/services/menuService";
-import { OrdersService } from "@/services/ordersService";
-import { ReservationsService, Reservation } from "@/services/reservationsService";
+import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
 
 const MenuManagement = lazy(() => import("@/components/MenuManagement").then(m => ({ default: m.MenuManagement })));
 const OrdersManagement = lazy(() => import("@/components/OrdersManagement").then(m => ({ default: m.OrdersManagement })));
@@ -29,87 +27,52 @@ const Index = () => {
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
 
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    monthlySales: 0,
-    activeOrders: 0,
-    monthlyOrders: 0,
-    todayReservations: 0,
-    monthlyReservations: 0,
-    menuItems: 0,
-    unavailableItems: 0,
-  });
-  const [allReservations, setAllReservations] = useState<Reservation[]>([]);
+  const { data: menuItems = [] } = useMenu();
+  const { data: orders = [] } = useOrders();
+  const { data: allReservations = [] } = useReservations();
 
-  useEffect(() => {
-    loadStats();
-    loadReservations();
+  const stats = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-    // Auto-refresh cada 1 minuto (60000 ms)
-    const interval = setInterval(() => {
-      loadStats();
-      loadReservations();
-    }, 60000);
+    const itemsWithPrice = menuItems.filter(item => item.price && item.price > 0);
+    const menuCount = itemsWithPrice.length;
+    const unavailableItems = itemsWithPrice.filter(item => item.stock < 1 || !item.available).length;
 
-    // Limpiar el interval cuando el componente se desmonte
-    return () => clearInterval(interval);
-  }, []);
+    const todayOrders = orders.filter(order => {
+      const orderDate = new Date(order.created_at || '').toISOString().split('T')[0];
+      return orderDate === today;
+    });
 
-  const loadStats = async () => {
-    try {
-      // Obtener items del menú
-      const menuData = await MenuService.getAll();
+    const monthlyOrdersData = orders.filter(order => {
+      const orderDate = new Date(order.created_at || '');
+      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+    });
 
-      // Contar total de items del menú y no disponibles
-      const itemsWithPrice = menuData.filter(item => item.price && item.price > 0);
-      const menuCount = itemsWithPrice.length;
-      const unavailableItems = itemsWithPrice.filter(item => {
-        return item.stock < 1 || !item.available;
-      }).length;
+    const activeOrdersData = orders.filter(order => order.status !== 'delivered' && order.status !== 'cancelled');
 
-      // Obtener todos los pedidos
-      const ordersData = await OrdersService.getAll();
-      const todayOrders = await OrdersService.getToday();
-      const monthlyOrdersData = await OrdersService.getThisMonth();
-      const activeOrdersData = await OrdersService.getActive();
+    const todayReservationsData = allReservations.filter(r => r.date === today);
+    const monthlyReservationsData = allReservations.filter(r => {
+      const reservationDate = new Date(r.date);
+      return reservationDate.getMonth() === currentMonth && reservationDate.getFullYear() === currentYear;
+    });
 
-      // Obtener reservas de hoy (usando cache)
-      const todayReservations = await ReservationsService.getToday();
-      const monthlyReservationsData = await ReservationsService.getThisMonth();
+    const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
+    const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
 
-      // Calcular ventas totales de los pedidos de hoy
-      const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
-
-      // Calcular ventas y pedidos mensuales
-      const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
-      const monthlyOrders = monthlyOrdersData.length;
-
-      // Contar todos los pedidos activos (no entregados o cancelados)
-      const activeOrders = activeOrdersData.length;
-
-      setStats({
-        totalSales,
-        monthlySales,
-        activeOrders,
-        monthlyOrders,
-        todayReservations: todayReservations.length,
-        monthlyReservations: monthlyReservationsData.length,
-        menuItems: menuCount,
-        unavailableItems: unavailableItems,
-      });
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error);
-    }
-  };
-
-  const loadReservations = async () => {
-    try {
-      const reservations = await ReservationsService.getAll();
-      setAllReservations(reservations);
-    } catch (error) {
-      console.error('Error loading reservations:', error);
-    }
-  };
+    return {
+      totalSales,
+      monthlySales,
+      activeOrders: activeOrdersData.length,
+      monthlyOrders: monthlyOrdersData.length,
+      todayReservations: todayReservationsData.length,
+      monthlyReservations: monthlyReservationsData.length,
+      menuItems: menuCount,
+      unavailableItems,
+    };
+  }, [menuItems, orders, allReservations]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -238,7 +201,6 @@ const Index = () => {
                     <Suspense fallback={<TabLoader />}>
                       <ReservationsManagement
                         reservations={allReservations}
-                        onReservationUpdate={loadReservations}
                       />
                     </Suspense>
                   </TabsContent>
@@ -299,7 +261,6 @@ const Index = () => {
                   <Suspense fallback={<TabLoader />}>
                     <ReservationsManagement
                       reservations={allReservations}
-                      onReservationUpdate={loadReservations}
                     />
                   </Suspense>
                 </TabsContent>
