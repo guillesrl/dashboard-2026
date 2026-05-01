@@ -1,6 +1,7 @@
 import { useState, memo } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { useOrders, useCreateOrder, useUpdateOrderStatus, useMenu } from "@/hooks/use-queries";
+import { exportOrdersToPDF, exportOrdersToExcel } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, AlertCircle, FileDown } from "lucide-react";
 import { parseNumber } from "@/lib/utils";
 
 
@@ -232,7 +233,16 @@ function OrdersManagementComponent() {
             <CardTitle>Pedidos</CardTitle>
             <CardDescription>Administra los pedidos</CardDescription>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportOrdersToPDF(orders, 'Reporte de Pedidos')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportOrdersToExcel(orders, 'Reporte de Pedidos')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>

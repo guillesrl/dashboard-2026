@@ -1,6 +1,7 @@
 import { useState, useCallback, memo } from "react";
 import { MenuService, MenuItem } from "@/services/menuService";
 import { useMenu, useCreateMenu, useUpdateMenu, useDeleteMenu, useUpdateMenuStock } from "@/hooks/use-queries";
+import { exportMenuToPDF, exportMenuToExcel } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
+import { Plus, Edit, Trash2, ChefHat, Pencil, X, FileDown } from "lucide-react";
 
 function MenuManagementComponent() {
   const { data: menuItems = [], isLoading } = useMenu();
@@ -174,7 +175,16 @@ function MenuManagementComponent() {
             <CardTitle>Menú</CardTitle>
             <CardDescription>Administra los platos</CardDescription>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportMenuToPDF(menuItems, 'Reporte del Menú')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportMenuToExcel(menuItems, 'Reporte del Menú')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
