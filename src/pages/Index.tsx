@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
+import { useRealtime } from "@/hooks/use-realtime";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService } from "@/services/reservationsService";
 import { useEffect } from "react";
@@ -29,6 +30,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("reservations");
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
+
+  useRealtime();
 
   const { data: menuItems = [] } = useMenu();
   const { data: orders = [], refetch: refetchOrders } = useOrders();
