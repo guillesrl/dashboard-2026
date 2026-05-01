@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { ReservationsService, Reservation } from "@/services/reservationsService";
+import { useState } from "react";
+import { Reservation } from "@/services/reservationsService";
+import { useCreateReservation, useUpdateReservationStatus } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +15,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationsManagementProps {
   reservations: Reservation[];
-  onReservationUpdate?: () => void;
 }
 
-export function ReservationsManagement({ reservations: initialReservations, onReservationUpdate }: ReservationsManagementProps) {
-  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
-  const [loading, setLoading] = useState(!initialReservations || initialReservations.length === 0);
+export function ReservationsManagement({ reservations }: ReservationsManagementProps) {
+  const createReservation = useCreateReservation();
+  const updateReservationStatus = useUpdateReservationStatus();
+
+  const [loading, setLoading] = useState(!reservations || reservations.length === 0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState("");
@@ -34,13 +36,6 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
   });
   const isMobile = useIsMobile();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-
-  // Sincronizar reservations cuando initialReservations cambie
-  useEffect(() => {
-    setReservations(initialReservations);
-    // Actualizar loading: false cuando initialReservations tenga datos (incluso si está vacío, significa que la consulta ya se completó)
-    setLoading(false);
-  }, [initialReservations]);
 
   const statusOptions = [
     { value: "confirmed", label: "Confirmada", color: "bg-green-500" },
@@ -63,7 +58,7 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
         notes: formData.notes
       };
 
-      await ReservationsService.create(reservationData);
+      await createReservation.mutateAsync(reservationData);
 
       toast({
         title: "Éxito",
@@ -72,8 +67,6 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
 
       setDialogOpen(false);
       resetForm();
-      // Notificar al padre para recargar
-      onReservationUpdate?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -83,40 +76,23 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
     }
   };
 
-  const updateReservationStatus = async (id: number, newStatus: Reservation['status']) => {
+  const handleUpdateReservationStatus = async (id: number, newStatus: Reservation['status']) => {
     try {
-      // Evitar múltiples clics en el mismo item
       if (updatingId === id) return;
 
       setUpdatingId(id);
-      await ReservationsService.updateStatus(id, newStatus);
+      await updateReservationStatus.mutateAsync({ id, status: newStatus });
 
       toast({
         title: "Éxito",
         description: "Estado actualizado correctamente"
       });
-
-      // Actualizar optimistamente la UI
-      setReservations(prev =>
-        prev.map(res =>
-          res.id === id
-            ? { ...res, status: newStatus }
-            : res
-        )
-      );
-
-      // Notificar al padre para recargar en background
-      setTimeout(() => {
-        onReservationUpdate?.();
-      }, 500);
     } catch (error: any) {
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",
         variant: "destructive"
       });
-      // Notificar al padre para recargar y restaurar estado
-      onReservationUpdate?.();
     } finally {
       setUpdatingId(null);
     }
@@ -147,21 +123,17 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
   // Filtrar y ordenar reservas:
   // - Si filterDate tiene valor, filtrar por esa fecha exacta
   // - Si filterDate está vacío, mostrar solo reservas de hoy en adelante (futuras)
-  const filteredReservations = reservations
+  const filteredReservations = (reservations || [])
     .filter(reservation => {
       if (filterDate) {
-        // Modo filtro específico por fecha seleccionada
         return reservation.date === filterDate;
       } else {
-        // Modo por defecto: mostrar solo reservas de hoy en adelante
         return reservation.date >= today;
       }
     })
     .sort((a, b) => {
-      // Ordenar por fecha (más reciente primero)
       const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateComparison !== 0) return dateComparison;
-      // Si las fechas son iguales, ordenar por hora (más temprana a más tardía)
       return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
 
@@ -346,7 +318,7 @@ export function ReservationsManagement({ reservations: initialReservations, onRe
                   <TableCell className="text-right">
                     <Select
                       value={reservation.status}
-                      onValueChange={(value: Reservation['status']) => updateReservationStatus(reservation.id, value)}
+                      onValueChange={(value: Reservation['status']) => handleUpdateReservationStatus(reservation.id, value)}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />

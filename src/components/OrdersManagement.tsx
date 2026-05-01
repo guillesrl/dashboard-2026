@@ -1,6 +1,6 @@
-import { useState, useEffect, memo } from "react";
+import { useState, memo } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
-import { MenuService } from "@/services/menuService";
+import { useOrders, useCreateOrder, useUpdateOrderStatus, useMenu } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,11 @@ import { parseNumber } from "@/lib/utils";
 
 
 function OrdersManagementComponent() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders = [], isLoading } = useOrders();
+  const { data: menuItems = [] } = useMenu();
+  const createOrder = useCreateOrder();
+  const updateOrderStatus = useUpdateOrderStatus();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -104,36 +106,6 @@ function OrdersManagementComponent() {
     };
   };
 
-  useEffect(() => {
-    fetchOrders();
-    fetchMenuItems();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const data = await OrdersService.getAll();
-      setOrders(data);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los pedidos",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMenuItems = async () => {
-    try {
-      const data = await MenuService.getAll();
-      setMenuItems(data);
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
-    }
-  };
-
   const handleAddItem = () => {
     if (!selectedItem || !quantity) return;
 
@@ -179,17 +151,6 @@ function OrdersManagementComponent() {
     }
 
     try {
-      const now = new Date();
-
-      // Formatear fecha en formato YYYY-MM-DD
-      const formattedDate = now.toISOString().split('T')[0];
-
-      // Formatear hora como HH:MM
-      const formattedTime = now.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
       const orderData = {
         customer_name: formData.customer_name,
         customer_phone: formData.customer_phone,
@@ -200,7 +161,7 @@ function OrdersManagementComponent() {
         notes: ''
       };
 
-      await OrdersService.create(orderData);
+      await createOrder.mutateAsync(orderData);
       
       toast({
         title: "Éxito",
@@ -209,7 +170,6 @@ function OrdersManagementComponent() {
 
       setDialogOpen(false);
       resetForm();
-      fetchOrders();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -219,15 +179,13 @@ function OrdersManagementComponent() {
     }
   };
 
-  const updateOrderStatus = async (orderId: number, newStatus: Order['status']) => {
+  const handleUpdateOrderStatus = async (orderId: number, newStatus: Order['status']) => {
     try {
-      await OrdersService.updateStatus(orderId, newStatus);
-
+      await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus });
       toast({
         title: "Éxito",
         description: "Estado actualizado correctamente"
       });
-      fetchOrders();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -262,7 +220,7 @@ function OrdersManagementComponent() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-8">Cargando pedidos...</div>;
   }
 
@@ -446,7 +404,7 @@ function OrdersManagementComponent() {
                   <TableCell className="text-right">
                     <Select
                       value={order.status}
-                      onValueChange={(value: Order['status']) => updateOrderStatus(order.id, value)}
+                      onValueChange={(value: Order['status']) => handleUpdateOrderStatus(order.id, value)}
                     >
                       <SelectTrigger className="w-[140px]">
                         <SelectValue />

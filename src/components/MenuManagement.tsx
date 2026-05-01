@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useCallback, memo } from "react";
 import { MenuService, MenuItem } from "@/services/menuService";
+import { useMenu, useCreateMenu, useUpdateMenu, useDeleteMenu, useUpdateMenuStock } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +14,12 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChefHat, Pencil, X } from "lucide-react";
 
 function MenuManagementComponent() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: menuItems = [], isLoading } = useMenu();
+  const createMenu = useCreateMenu();
+  const updateMenu = useUpdateMenu();
+  const deleteMenu = useDeleteMenu();
+  const updateStock = useUpdateMenuStock();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState({
@@ -71,15 +76,7 @@ function MenuManagementComponent() {
   const handleStockUpdate = async (id: number, newStock: string) => {
     try {
       const stockNumber = parseInt(newStock);
-      await MenuService.updateStock(id, stockNumber);
-      
-      // Update local state immediately for better UX
-      setMenuItems(prevItems =>
-        prevItems.map(item =>
-          item.id === id ? { ...item, stock: stockNumber } : item
-        )
-      );
-
+      await updateStock.mutateAsync({ id, stock: stockNumber });
       toast({
         title: "Éxito",
         description: "Stock actualizado correctamente",
@@ -98,13 +95,12 @@ function MenuManagementComponent() {
     if (!window.confirm("¿Estás seguro de eliminar este item?")) return;
     
     try {
-      await MenuService.delete(id);
+      await deleteMenu.mutateAsync(id);
       toast({
         title: "Éxito",
         description: "Item eliminado correctamente",
         variant: "default"
       });
-      fetchMenuItems();
     } catch (error) {
       console.error('Error deleting item:', error);
       toast({
@@ -112,26 +108,6 @@ function MenuManagementComponent() {
         description: "No se pudo eliminar el item",
         variant: "destructive"
       });
-    }
-  };
-
-  useEffect(() => {
-    fetchMenuItems();
-  }, []);
-
-  const fetchMenuItems = async () => {
-    try {
-      const data = await MenuService.getAll();
-      setMenuItems(data);
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los items del menú",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -149,13 +125,13 @@ function MenuManagementComponent() {
       };
 
       if (editingItem) {
-        await MenuService.update(editingItem.id, itemData);
+        await updateMenu.mutateAsync({ id: editingItem.id, item: itemData });
         toast({
           title: "Éxito",
           description: "Item actualizado correctamente"
         });
       } else {
-        await MenuService.create(itemData as Omit<MenuItem, 'id' | 'created_at' | 'updated_at'>);
+        await createMenu.mutateAsync(itemData as Omit<MenuItem, 'id' | 'created_at' | 'updated_at'>);
         toast({
           title: "Éxito",
           description: "Item creado correctamente"
@@ -164,7 +140,6 @@ function MenuManagementComponent() {
 
       setDialogOpen(false);
       resetForm();
-      fetchMenuItems();
     } catch (error) {
       console.error('Error saving item:', error);
       toast({
@@ -187,7 +162,7 @@ function MenuManagementComponent() {
     setEditingItem(null);
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-8">Cargando menú...</div>;
   }
 
