@@ -34,3 +34,13 @@
 - **Tarea**: Si
 - **Herramientas**: búsqueda de contenido, búsqueda de archivos, escritura de archivos, editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-01 21:40
+- **Tarea**: Si
+- **Herramientas**: bash, escritura de archivos, editor
+- **Resultado**: Subido.
+
+## 2026-05-01 23:42
+- **Tarea**: Que tal está?: Agregar KPIs en la pagina de Analiticas. Hoy solo hay graficos. Tarjetas con: ticket promedio, plato estr
+- **Herramientas**: lectura de archivos, editor
+- **Resultado**: Se agregan 4 tarjetas KPI sobre los gráficos:  - Ticket promedio (ventas del mes / total pedidos) - Plato estrella (ítem más vendido del mes) - Hora pico (hora con más pedidos) - Tasa de cancelación (% del mes)  ¿Procedo?
