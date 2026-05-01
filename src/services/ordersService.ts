@@ -23,11 +23,34 @@ export interface Order {
 }
 
 export class OrdersService {
-  // Obtener todos los pedidos
   static async getAll(): Promise<Order[]> {
     const response = await api.getOrders();
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to fetch orders');
+    }
+    return response.data;
+  }
+
+  static async getToday(): Promise<Order[]> {
+    const response = await api.getOrders('today');
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch today orders');
+    }
+    return response.data;
+  }
+
+  static async getThisMonth(): Promise<Order[]> {
+    const response = await api.getOrders('month');
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch monthly orders');
+    }
+    return response.data;
+  }
+
+  static async getActive(): Promise<Order[]> {
+    const response = await api.getOrders('active');
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch active orders');
     }
     return response.data;
   }
@@ -78,34 +101,5 @@ export class OrdersService {
   static async getByStatus(status: Order['status']): Promise<Order[]> {
     const orders = await this.getAll();
     return orders.filter(order => order.status === status);
-  }
-
-  // Obtener pedidos activos (no entregados ni cancelados)
-  static async getActive(): Promise<Order[]> {
-    const orders = await this.getAll();
-    return orders.filter(order => order.status !== 'delivered' && order.status !== 'cancelled');
-  }
-
-  // Obtener pedidos de hoy
-  static async getToday(): Promise<Order[]> {
-    const orders = await this.getAll();
-    const today = new Date().toISOString().split('T')[0];
-    return orders.filter(order => {
-      const orderDate = new Date(order.created_at || '').toISOString().split('T')[0];
-      return orderDate === today;
-    });
-  }
-
-  // Obtener pedidos del mes actual
-  static async getThisMonth(): Promise<Order[]> {
-    const orders = await this.getAll();
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    return orders.filter(order => {
-      const orderDate = new Date(order.created_at || '');
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-    });
   }
 }

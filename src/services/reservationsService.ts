@@ -66,21 +66,19 @@ export class ReservationsService {
   }
 
   static async getToday(): Promise<Reservation[]> {
-    const reservations = await this.getAll();
-    const today = new Date().toISOString().split('T')[0];
-    return reservations.filter(reservation => reservation.date === today);
+    const response = await api.getReservations('today');
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch today reservations');
+    }
+    return response.data;
   }
 
   static async getThisMonth(): Promise<Reservation[]> {
-    const reservations = await this.getAll();
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    return reservations.filter(reservation => {
-      const reservationDate = new Date(reservation.date);
-      return reservationDate.getMonth() === currentMonth && reservationDate.getFullYear() === currentYear;
-    });
+    const response = await api.getReservations('month');
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch monthly reservations');
+    }
+    return response.data;
   }
 
   static async getConfirmed(): Promise<Reservation[]> {

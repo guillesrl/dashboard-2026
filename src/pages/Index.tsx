@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
+import { OrdersService } from "@/services/ordersService";
+import { ReservationsService } from "@/services/reservationsService";
+import { useEffect } from "react";
 
 const MenuManagement = lazy(() => import("@/components/MenuManagement").then(m => ({ default: m.MenuManagement })));
 const OrdersManagement = lazy(() => import("@/components/OrdersManagement").then(m => ({ default: m.OrdersManagement })));
@@ -28,36 +31,37 @@ const Index = () => {
   const isMobile = useIsMobile();
 
   const { data: menuItems = [] } = useMenu();
-  const { data: orders = [] } = useOrders();
-  const { data: allReservations = [] } = useReservations();
+  const { data: orders = [], refetch: refetchOrders } = useOrders();
+  const { data: allReservations = [], refetch: refetchReservations } = useReservations();
+
+  const [todayOrders, setTodayOrders] = useState([]);
+  const [monthlyOrdersData, setMonthlyOrdersData] = useState([]);
+  const [activeOrdersData, setActiveOrdersData] = useState([]);
+  const [todayReservationsData, setTodayReservationsData] = useState([]);
+  const [monthlyReservationsData, setMonthlyReservationsData] = useState([]);
+
+  useEffect(() => {
+    const loadFilteredData = async () => {
+      const [todayOrd, monthOrd, activeOrd, todayRes, monthRes] = await Promise.all([
+        OrdersService.getToday(),
+        OrdersService.getThisMonth(),
+        OrdersService.getActive(),
+        ReservationsService.getToday(),
+        ReservationsService.getThisMonth(),
+      ]);
+      setTodayOrders(todayOrd);
+      setMonthlyOrdersData(monthOrd);
+      setActiveOrdersData(activeOrd);
+      setTodayReservationsData(todayRes);
+      setMonthlyReservationsData(monthRes);
+    };
+    loadFilteredData();
+  }, [orders, allReservations]);
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
     const itemsWithPrice = menuItems.filter(item => item.price && item.price > 0);
     const menuCount = itemsWithPrice.length;
     const unavailableItems = itemsWithPrice.filter(item => item.stock < 1 || !item.available).length;
-
-    const todayOrders = orders.filter(order => {
-      const orderDate = new Date(order.created_at || '').toISOString().split('T')[0];
-      return orderDate === today;
-    });
-
-    const monthlyOrdersData = orders.filter(order => {
-      const orderDate = new Date(order.created_at || '');
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-    });
-
-    const activeOrdersData = orders.filter(order => order.status !== 'delivered' && order.status !== 'cancelled');
-
-    const todayReservationsData = allReservations.filter(r => r.date === today);
-    const monthlyReservationsData = allReservations.filter(r => {
-      const reservationDate = new Date(r.date);
-      return reservationDate.getMonth() === currentMonth && reservationDate.getFullYear() === currentYear;
-    });
 
     const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
     const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
@@ -72,7 +76,7 @@ const Index = () => {
       menuItems: menuCount,
       unavailableItems,
     };
-  }, [menuItems, orders, allReservations]);
+  }, [menuItems, todayOrders, monthlyOrdersData, activeOrdersData, todayReservationsData, monthlyReservationsData]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

@@ -74,8 +74,9 @@ class ApiClient {
   }
 
   // Orders endpoints
-  async getOrders() {
-    return this.request<any[]>('/orders');
+  async getOrders(filter?: 'today' | 'month' | 'active') {
+    const query = filter ? `?filter=${filter}` : '';
+    return this.request<any[]>(`/orders${query}`);
   }
 
   async createOrder(order: any) {
@@ -100,8 +101,9 @@ class ApiClient {
   }
 
   // Reservations endpoints
-  async getReservations() {
-    return this.request<any[]>('/reservations');
+  async getReservations(filter?: 'today' | 'month') {
+    const query = filter ? `?filter=${filter}` : '';
+    return this.request<any[]>(`/reservations${query}`);
   }
 
   async createReservation(reservation: any) {

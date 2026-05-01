@@ -19,3 +19,8 @@
 - **Tarea**: Crees tu que hacer está mejora es necesario? Unificar el fetching de datos con React Query. Hoy solo SalesByHourChart lo
 - **Herramientas**: lectura de archivos
 - **Resultado**: Sí, es una mejora muy recomendable. Ahora mismo tienes:  - Auto-refresh manual cada 60s en Index.tsx (trae datos aunque no hayan cambiado) - Cache custom en ReservationsService con TTL de 5s y fetch locking (código extra que React Query resuelve nativamente) - MenuService y OrdersService sin cache, 
+
+## 2026-05-01 19:53
+- **Tarea**: Si
+- **Herramientas**: todowrite, lectura de archivos, escritura de archivos, editor, bash
+- **Resultado**: Subido.
