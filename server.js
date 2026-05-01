@@ -373,10 +373,22 @@ app.patch('/api/menu/:id/stock', async (req, res) => {
 
 app.get('/api/orders', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { filter } = req.query;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    let query = supabase.from('orders').select('*');
+
+    if (filter === 'today') {
+      query = query.gte('created_at', today);
+    } else if (filter === 'month') {
+      query = query.gte('created_at', monthStart);
+    } else if (filter === 'active') {
+      query = query.neq('status', 'delivered').neq('status', 'cancelled');
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -467,9 +479,20 @@ app.patch('/api/orders/:id/status', async (req, res) => {
 
 app.get('/api/reservations', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('reservations')
-      .select('*')
+    const { filter } = req.query;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+
+    let query = supabase.from('reservations').select('*');
+
+    if (filter === 'today') {
+      query = query.eq('date', today);
+    } else if (filter === 'month') {
+      query = query.gte('date', monthStart);
+    }
+
+    const { data, error } = await query
       .order('date', { ascending: false })
       .order('time', { ascending: false });
 
