@@ -35,7 +35,7 @@ const Index = () => {
 
   const { data: menuItems = [] } = useMenu();
   const { data: orders = [], refetch: refetchOrders } = useOrders();
-  const { data: allReservations = [], refetch: refetchReservations } = useReservations();
+  const { data: allReservations = [], isLoading: isLoadingReservations } = useReservations();
 
   const [todayOrders, setTodayOrders] = useState([]);
   const [monthlyOrdersData, setMonthlyOrdersData] = useState([]);
@@ -208,6 +208,7 @@ const Index = () => {
                     <Suspense fallback={<TabLoader />}>
                       <ReservationsManagement
                         reservations={allReservations}
+                        isLoading={isLoadingReservations}
                       />
                     </Suspense>
                   </TabsContent>
@@ -268,6 +269,7 @@ const Index = () => {
                   <Suspense fallback={<TabLoader />}>
                     <ReservationsManagement
                       reservations={allReservations}
+                      isLoading={isLoadingReservations}
                     />
                   </Suspense>
                 </TabsContent>
