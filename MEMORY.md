@@ -44,3 +44,13 @@
 - **Tarea**: Que tal está?: Agregar KPIs en la pagina de Analiticas. Hoy solo hay graficos. Tarjetas con: ticket promedio, plato estr
 - **Herramientas**: lectura de archivos, editor
 - **Resultado**: Se agregan 4 tarjetas KPI sobre los gráficos:  - Ticket promedio (ventas del mes / total pedidos) - Plato estrella (ítem más vendido del mes) - Hora pico (hora con más pedidos) - Tasa de cancelación (% del mes)  ¿Procedo?
+
+## 2026-05-01 23:43
+- **Tarea**: Si
+- **Herramientas**: bash
+- **Resultado**: Subido.
+
+## 2026-05-02 08:30
+- **Tarea**: No veo los kpis sobre los gráficos , está implementado?
+- **Herramientas**: lectura de archivos
+- **Resultado**: El código está implementado correctamente (líneas 55-107). Probablemente necesitas reiniciar el dev server o hacer un hard refresh (Ctrl+Shift+R) en el navegador para que cargue la nueva versión.
