@@ -54,3 +54,11 @@
 - **Tarea**: No veo los kpis sobre los gráficos , está implementado?
 - **Herramientas**: lectura de archivos
 - **Resultado**: El código está implementado correctamente (líneas 55-107). Probablemente necesitas reiniciar el dev server o hacer un hard refresh (Ctrl+Shift+R) en el navegador para que cargue la nueva versión.
+
+## 2026-05-02 08:36
+- **Tarea**: #17 3.275 ✓ 46 modules transformed.
+#17 3.277 x Build failed in 2.26s
+#17 3.277 error during build:
+#17 3.277 [vite:esbu
+- **Herramientas**: lectura de archivos, editor, bash
+- **Resultado**: Subido.
