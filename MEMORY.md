@@ -68,3 +68,8 @@
  - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensit
 - **Herramientas**: bash, lectura de archivos, editor
 - **Resultado**: Subido.
+
+## 2026-05-02 09:31
+- **Tarea**: Los botones de agregar plato y agregar pedidos en modo móvil deben ser sin texto solo el +
+- **Herramientas**: editor, bash
+- **Resultado**: Subido.

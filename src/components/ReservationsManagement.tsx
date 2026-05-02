@@ -16,13 +16,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationsManagementProps {
   reservations: Reservation[];
+  isLoading?: boolean;
 }
 
-export function ReservationsManagement({ reservations }: ReservationsManagementProps) {
+export function ReservationsManagement({ reservations, isLoading }: ReservationsManagementProps) {
   const createReservation = useCreateReservation();
   const updateReservationStatus = useUpdateReservationStatus();
 
-  const [loading, setLoading] = useState(!reservations || reservations.length === 0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState("");
@@ -138,7 +138,7 @@ export function ReservationsManagement({ reservations }: ReservationsManagementP
       return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
 
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-8">Cargando reservas...</div>;
   }
 
