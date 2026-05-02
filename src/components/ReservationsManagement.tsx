@@ -147,8 +147,8 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
       <CardHeader>
         <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-4' : ''}`}>
           <div>
-            <CardTitle>Reservas</CardTitle>
-            <CardDescription>Administra las reservas</CardDescription>
+            <CardTitle className="text-base md:text-lg">Reservas</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Administra las reservas</CardDescription>
           </div>
           <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
             <div className="flex gap-2">

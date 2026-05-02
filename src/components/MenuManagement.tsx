@@ -172,8 +172,8 @@ function MenuManagementComponent() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Menú</CardTitle>
-            <CardDescription>Administra los platos</CardDescription>
+            <CardTitle className="text-base md:text-lg">Menú</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Administra los platos</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => exportMenuToPDF(menuItems, 'Reporte del Menú')}>
