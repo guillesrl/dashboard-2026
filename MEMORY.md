@@ -83,3 +83,9 @@
 - **Tarea**: En modo móvil reduce el tamaño de los titulos
 - **Herramientas**: editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 09:58
+- **Tarea**: Me he quedado sin conexión a internet y me apareció este mensaje: Unexpected Application Error!
+Failed to fetch dynamica
+- **Herramientas**: escritura de archivos, editor, bash
+- **Resultado**: Subido.
