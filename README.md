@@ -9,8 +9,10 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **Gestión de Reservas**: Sistema de reservas con filtro por fecha y actualización en tiempo real
 - **Base de Datos**: Supabase (PostgreSQL) para almacenamiento persistente
 - **Interfaz Moderna**: React + TypeScript + Tailwind CSS + shadcn/ui
-- **Auto-refresh**: Dashboard se actualiza automáticamente cada 1 minuto
-- **Analíticas**: Sección de gráficas para ventas por hora
+- **Tiempo Real**: Supabase Realtime para notificaciones instantáneas de nuevos pedidos y reservas
+- **Analíticas**: KPIs (ticket promedio, plato estrella, hora pico, tasa de cancelación) + 4 gráficos interactivos
+- **Exportación**: Reportes en PDF y Excel para pedidos, reservas y menú
+- **Seguridad**: Helmet, rate-limiting y logging con Morgan en el servidor
 - **Server-side Rendering**: Express sirve tanto API como frontend estático
 
 ## 🛠️ Tecnologías
@@ -22,15 +24,21 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **Tailwind CSS** - Framework de estilos
 - **shadcn/ui** - Componentes UI
 - **Lucide React** - Iconos
-- **React Query** - Gestión de estado del servidor
+- **React Query** - Gestión de estado del servidor con cache automático e invalidación inteligente
+- **Supabase Realtime** - Suscripciones en tiempo real a cambios en la base de datos
+- **jsPDF + jspdf-autotable** - Exportación de reportes a PDF
+- **xlsx** - Exportación de reportes a Excel
 - **Vitest + Testing Library** - Tests unitarios y de componentes
-- **ErrorBoundary** - Captura de errores en árbol de componentes
+- **ErrorBoundary + ChunkErrorBoundary** - Captura de errores en árbol de componentes y fallos de carga de red
 
 ### Backend
 - **Node.js 20+** - Runtime del servidor
 - **Express.js 5** - Framework web
 - **Supabase** - Base de datos PostgreSQL como servicio
 - **@supabase/supabase-js** - Cliente oficial de Supabase
+- **Helmet** - Headers de seguridad HTTP
+- **express-rate-limit** - Limitación de peticiones (200 req/15min)
+- **Morgan** - Logging de requests
 - **CORS** - Habilitar peticiones cross-origin
 - **dotenv** - Gestión de variables de entorno
 
@@ -203,27 +211,26 @@ NODE_VERSION=20
 - `DELETE /api/menu/:id` - Eliminar item
 
 ### Pedidos
-- `GET /api/orders` - Obtener todos los pedidos
+- `GET /api/orders?filter=today|month|active` - Obtener pedidos con filtros server-side
 - `POST /api/orders` - Crear nuevo pedido
 - `PUT /api/orders/:id` - Actualizar pedido
 - `PATCH /api/orders/:id/status` - Cambiar estado
+
+### Reservas
+- `GET /api/reservations?filter=today|month` - Obtener reservas con filtros server-side
+- `POST /api/reservations` - Crear nueva reserva
+- `PATCH /api/reservations/:id/status` - Cambiar estado
 
 ### Analíticas
 - `GET /api/analytics/sales-by-hour` - Obtener ventas totales desglosadas por hora
 
 ## 🔧 Configuración Avanzada
 
-### Auto-refresh
-El dashboard se actualiza automáticamente cada 60 segundos. Para cambiar la frecuencia, edita `src/pages/Index.tsx`:
-```typescript
-const interval = setInterval(() => {
-  loadStats();
-  loadReservations();
-}, 60000); // Cambiar a milisegundos deseados
-```
+### React Query + Supabase Realtime
+El dashboard usa React Query para cache automático con `staleTime: 30s` e invalidación inteligente tras mutations. Supabase Realtime suscribe a cambios en las tablas `orders` y `reservations`, actualizando el cache y mostrando notificaciones toast en tiempo real.
 
-### Cache de Reservas
-El servicio de reservas incluye cache en memoria con TTL de 5 segundos para optimizar el rendimiento y evitar llamadas API duplicadas.
+### Exportación de Reportes
+Cada sección (pedidos, reservas, menú) incluye botones para exportar a PDF y Excel con datos filtrados y nombres de archivo con fecha.
 
 ### Variables de Entorno Soportadas
 - `PORT`: Puerto del servidor (default: 80 en producción, 8080 en desarrollo)
@@ -259,17 +266,21 @@ El servicio de reservas incluye cache en memoria con TTL de 5 segundos para opti
 - En desarrollo usa el puerto que asigne Vite (usualmente 5173)
 
 ### Logs duplicados
-- Se implementó cache y locking en `ReservationsService` para prevenir llamadas simultáneas
-- Las reservas se cargan centralizadamente en `Index.tsx` para evitar duplicados
+- React Query deduplica automáticamente las peticiones concurrentes
+- Supabase Realtime invalida el cache cuando hay cambios en la base de datos
 
 ## 📝 Notas de Desarrollo
 
 - El proyecto usa TypeScript para tipado seguro
 - Los componentes usan shadcn/ui para UI consistente
-- La API sigue formato RESTful
+- La API sigue formato RESTful con filtros server-side para pedidos y reservas
 - Las fechas se manejan con timezone local
 - El filtro de reservas maneja correctamente zonas horarias
 - El servidor Express sirve tanto API como frontend (SPA routing)
+- React Query gestiona el estado del servidor con hooks personalizados en `src/hooks/use-queries.ts`
+- Supabase Realtime suscribe a cambios en `orders` y `reservations` via `src/hooks/use-realtime.ts`
+- La exportación a PDF/Excel usa jspdf y xlsx desde `src/lib/export.ts`
+- ChunkErrorBoundary maneja fallos de carga de red con mensaje amigable
 - To update dependencies, use `npm update` and check for breaking changes
 
 ## 🤝 Contribuir
