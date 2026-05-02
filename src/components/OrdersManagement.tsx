@@ -230,8 +230,8 @@ function OrdersManagementComponent() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Pedidos</CardTitle>
-            <CardDescription>Administra los pedidos</CardDescription>
+            <CardTitle className="text-base md:text-lg">Pedidos</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Administra los pedidos</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => exportOrdersToPDF(orders, 'Reporte de Pedidos')}>

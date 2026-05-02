@@ -73,3 +73,8 @@
 - **Tarea**: Los botones de agregar plato y agregar pedidos en modo móvil deben ser sin texto solo el +
 - **Herramientas**: editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 09:45
+- **Tarea**: En la primer apertura de la web la página se queda en "cargando reservas"
+- **Herramientas**: editor, búsqueda de contenido, bash
+- **Resultado**: Subido.
