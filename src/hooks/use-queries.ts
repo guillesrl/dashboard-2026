@@ -81,7 +81,18 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: Order['status'] }) => OrdersService.updateStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ORDERS_KEYS.all }),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ORDERS_KEYS.all });
+      const previous = queryClient.getQueryData<Order[]>(ORDERS_KEYS.all);
+      if (previous) {
+        queryClient.setQueryData(ORDERS_KEYS.all, previous.map(o => o.id === id ? { ...o, status } : o));
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(ORDERS_KEYS.all, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ORDERS_KEYS.all }),
   });
 }
 
@@ -105,6 +116,17 @@ export function useUpdateReservationStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: Reservation['status'] }) => ReservationsService.updateStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: RESERVATIONS_KEYS.all }),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: RESERVATIONS_KEYS.all });
+      const previous = queryClient.getQueryData<Reservation[]>(RESERVATIONS_KEYS.all);
+      if (previous) {
+        queryClient.setQueryData(RESERVATIONS_KEYS.all, previous.map(r => r.id === id ? { ...r, status } : r));
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(RESERVATIONS_KEYS.all, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: RESERVATIONS_KEYS.all }),
   });
 }

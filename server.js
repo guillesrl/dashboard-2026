@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { z } from 'zod';
 
 // Cargar variables de entorno desde .env y .env.production
 dotenv.config();
@@ -28,6 +29,43 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Zod validation schemas
+const menuSchema = z.object({
+  name: z.string().min(1).max(255),
+  price: z.number().positive(),
+  category: z.string().min(1).max(100),
+  stock: z.number().int().min(0).default(0),
+  description: z.string().optional(),
+  vegetariano: z.string().optional(),
+  gluten: z.string().optional(),
+  marisco: z.string().optional(),
+  lactosa: z.string().optional(),
+  vegano: z.string().optional(),
+});
+
+const orderSchema = z.object({
+  customer_name: z.string().min(1).max(255),
+  customer_phone: z.string().optional(),
+  items: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    price: z.number(),
+    quantity: z.number().int().min(1),
+  })).min(1),
+  total: z.number().positive(),
+  status: z.enum(['pending', 'preparing', 'ready', 'delivered', 'cancelled']).optional(),
+});
+
+const reservationSchema = z.object({
+  customer_name: z.string().min(1).max(255),
+  phone: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  guests: z.number().int().min(1),
+  status: z.enum(['confirmed', 'pending', 'cancelled', 'completed']).optional(),
+  notes: z.string().optional(),
+});
 
 // Helper functions para mapeo de datos
 const mapMenuItem = (item) => ({
@@ -235,20 +273,12 @@ app.get('/api/menu', async (req, res) => {
 
 app.post('/api/menu', async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      price,
-      category,
-      stock,
-      available,
-      vegetariano,
-      gluten,
-      marisco,
-      lactosa,
-      vegano,
-      ingredientes
-    } = req.body;
+    const validation = menuSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
+    }
+
+    const { name, description, price, category, stock, vegetariano, gluten, marisco, lactosa, vegano } = validation.data;
 
     const { data, error } = await supabase
       .from('menu')
@@ -262,7 +292,7 @@ app.post('/api/menu', async (req, res) => {
         marisco: marisco || 'no',
         lactosa: lactosa || 'no',
         vegano: vegano || 'no',
-        ingredientes: description || ingredientes
+        ingredientes: description
       })
       .select()
       .single();
@@ -403,7 +433,12 @@ app.get('/api/orders', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { customer_name, customer_phone, customer_email, items, total, status = 'pending', notes } = req.body;
+    const validation = orderSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
+    }
+
+    const { customer_name, customer_phone, items, total, status = 'pending' } = validation.data;
 
     const { data, error } = await supabase
       .from('orders')
@@ -509,7 +544,12 @@ app.get('/api/reservations', async (req, res) => {
 
 app.post('/api/reservations', async (req, res) => {
   try {
-    const { customer_name, phone, customer_email, date, time, guests, table_number, status = 'confirmed', notes } = req.body;
+    const validation = reservationSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
+    }
+
+    const { customer_name, phone, date, time, guests, status = 'confirmed', notes } = validation.data;
 
     const { data, error } = await supabase
       .from('reservations')
@@ -519,7 +559,7 @@ app.post('/api/reservations', async (req, res) => {
         date: date,
         time: time,
         people: guests,
-        table_number: table_number,
+        table_number: null,
         status: status,
         observations: notes
       })
