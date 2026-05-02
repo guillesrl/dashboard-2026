@@ -9,6 +9,7 @@ import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
 import { useRealtime } from "@/hooks/use-realtime";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService } from "@/services/reservationsService";
 import { useEffect } from "react";
@@ -197,24 +198,32 @@ const Index = () => {
               <div className="flex-1 flex flex-col pb-16">
                 <div className="flex-1 overflow-auto">
                   <TabsContent value="menu" className="mt-0 h-full">
-                    <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
+                    <ChunkErrorBoundary>
+                      <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
+                    </ChunkErrorBoundary>
                   </TabsContent>
 
                   <TabsContent value="orders" className="space-y-4">
-                    <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
+                    <ChunkErrorBoundary>
+                      <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
+                    </ChunkErrorBoundary>
                   </TabsContent>
 
                   <TabsContent value="reservations" className="mt-0 h-full">
-                    <Suspense fallback={<TabLoader />}>
-                      <ReservationsManagement
-                        reservations={allReservations}
-                        isLoading={isLoadingReservations}
-                      />
-                    </Suspense>
+                    <ChunkErrorBoundary>
+                      <Suspense fallback={<TabLoader />}>
+                        <ReservationsManagement
+                          reservations={allReservations}
+                          isLoading={isLoadingReservations}
+                        />
+                      </Suspense>
+                    </ChunkErrorBoundary>
                   </TabsContent>
 
                   <TabsContent value="analytics" className="mt-0 h-full">
-                    <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
+                    <ChunkErrorBoundary>
+                      <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
+                    </ChunkErrorBoundary>
                   </TabsContent>
                 </div>
 
@@ -258,24 +267,32 @@ const Index = () => {
             {!isMobile && (
               <>
                 <TabsContent value="menu" className="space-y-4">
-                  <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
+                  <ChunkErrorBoundary>
+                    <Suspense fallback={<TabLoader />}><MenuManagement /></Suspense>
+                  </ChunkErrorBoundary>
                 </TabsContent>
 
                 <TabsContent value="orders" className="space-y-4">
-                  <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
+                  <ChunkErrorBoundary>
+                    <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
+                  </ChunkErrorBoundary>
                 </TabsContent>
 
                 <TabsContent value="reservations" className="space-y-4">
-                  <Suspense fallback={<TabLoader />}>
-                    <ReservationsManagement
-                      reservations={allReservations}
-                      isLoading={isLoadingReservations}
-                    />
-                  </Suspense>
+                  <ChunkErrorBoundary>
+                    <Suspense fallback={<TabLoader />}>
+                      <ReservationsManagement
+                        reservations={allReservations}
+                        isLoading={isLoadingReservations}
+                      />
+                    </Suspense>
+                  </ChunkErrorBoundary>
                 </TabsContent>
 
                 <TabsContent value="analytics" className="space-y-4">
-                  <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
+                  <ChunkErrorBoundary>
+                    <Suspense fallback={<TabLoader />}><AnalyticsPage /></Suspense>
+                  </ChunkErrorBoundary>
                 </TabsContent>
               </>
             )}

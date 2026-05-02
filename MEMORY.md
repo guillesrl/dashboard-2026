@@ -78,3 +78,8 @@
 - **Tarea**: En la primer apertura de la web la página se queda en "cargando reservas"
 - **Herramientas**: editor, búsqueda de contenido, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 09:51
+- **Tarea**: En modo móvil reduce el tamaño de los titulos
+- **Herramientas**: editor, bash
+- **Resultado**: Subido.
