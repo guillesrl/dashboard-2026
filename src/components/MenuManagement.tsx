@@ -191,8 +191,8 @@ function MenuManagementComponent() {
           }}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Añadir Plato
+                <Plus className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Añadir Plato</span>
               </Button>
             </DialogTrigger>
             <DialogContent>

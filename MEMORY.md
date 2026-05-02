@@ -62,3 +62,9 @@
 #17 3.277 [vite:esbu
 - **Herramientas**: lectura de archivos, editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 08:46
+- **Tarea**: 3 warnings found (use docker --debug to expand):
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensit
+- **Herramientas**: bash, lectura de archivos, editor
+- **Resultado**: Subido.

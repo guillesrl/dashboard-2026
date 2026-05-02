@@ -249,8 +249,8 @@ function OrdersManagementComponent() {
           }}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Pedido
+                <Plus className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Nuevo Pedido</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
