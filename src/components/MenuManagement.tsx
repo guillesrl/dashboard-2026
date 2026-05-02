@@ -184,7 +184,8 @@ function MenuManagementComponent() {
               <FileDown className="h-4 w-4 mr-2" />
               Excel
             </Button>
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
