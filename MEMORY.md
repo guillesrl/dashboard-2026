@@ -89,3 +89,8 @@
 Failed to fetch dynamica
 - **Herramientas**: escritura de archivos, editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 13:15
+- **Tarea**: Actualiza el readme de la web con las nuevas tecnologías
+- **Herramientas**: lectura de archivos, editor, bash
+- **Resultado**: Subido.
