@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
 import { useRealtime } from "@/hooks/use-realtime";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
+import { StockAlertsPanel } from "@/components/StockAlertsPanel";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService } from "@/services/reservationsService";
 import { useEffect } from "react";
@@ -110,6 +111,11 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
+        {/* Alertas de stock bajo */}
+        <div className="pt-3 md:pt-6">
+          <StockAlertsPanel />
+        </div>
+
         {/* Stats Overview - 2x2 en móvil, 4 columnas en desktop */}
         <div className="py-3 md:py-6">
           <div className="grid grid-cols-2 gap-2 px-4 md:grid-cols-4 md:gap-4 md:container md:mx-auto">
