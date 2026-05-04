@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Cliente HTTP para comunicarse con una API REST
 // Esto evita el problema de usar pg directamente en el navegador
 

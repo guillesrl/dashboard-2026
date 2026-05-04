@@ -79,7 +79,7 @@ function OrdersManagementComponent() {
     return timeString || '--:--';
   };
 
-  const processOrderData = (orderData: any): Order => {
+  const processOrderData = (orderData: Record<string, unknown>): Order => {
     // Procesar items si vienen como string
     let processedItems: OrderItem[] = [];
     if (Array.isArray(orderData.items)) {
@@ -172,10 +172,11 @@ function OrdersManagementComponent() {
 
       setDialogOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo crear la orden";
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear la orden",
+        description: message,
         variant: "destructive"
       });
     }
@@ -188,7 +189,7 @@ function OrdersManagementComponent() {
         title: "Éxito",
         description: "Estado actualizado correctamente"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",
