@@ -69,10 +69,11 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
 
       setDialogOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo crear la reserva";
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear la reserva",
+        description: message,
         variant: "destructive"
       });
     }
@@ -89,7 +90,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
         title: "Éxito",
         description: "Estado actualizado correctamente"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",

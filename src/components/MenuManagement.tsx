@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ChefHat, Pencil, X, FileDown } from "lucide-react";
+import { Plus, Edit, Trash2, ChefHat, Pencil, X, FileDown, AlertTriangle } from "lucide-react";
+import { STOCK_LOW_THRESHOLD } from "@/hooks/use-stock-alerts";
 
 function MenuManagementComponent() {
   const { data: menuItems = [], isLoading } = useMenu();
@@ -84,7 +85,7 @@ function MenuManagementComponent() {
         description: "Stock actualizado correctamente",
         variant: "default"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "No se pudo actualizar el stock",
