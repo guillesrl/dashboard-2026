@@ -1,5 +1,4 @@
-import { useState, Suspense, lazy, useMemo } from "react";
-import { parseNumber } from "@/lib/utils";
+import { useState, Suspense, lazy, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +10,7 @@ import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
 import { useRealtime } from "@/hooks/use-realtime";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import { StockAlertsPanel } from "@/components/StockAlertsPanel";
-import { OrdersService } from "@/services/ordersService";
-import { ReservationsService } from "@/services/reservationsService";
-import { useEffect } from "react";
+import { cargarDatosDashboard, calcularEstadisticas, DatosDashboard } from "@/lib/rutinas";
 
 const MenuManagement = lazy(() => import("@/components/MenuManagement").then(m => ({ default: m.MenuManagement })));
 const OrdersManagement = lazy(() => import("@/components/OrdersManagement").then(m => ({ default: m.OrdersManagement })));
@@ -39,49 +36,22 @@ const Index = () => {
   const { data: orders = [], refetch: refetchOrders } = useOrders();
   const { data: allReservations = [], isLoading: isLoadingReservations } = useReservations();
 
-  const [todayOrders, setTodayOrders] = useState([]);
-  const [monthlyOrdersData, setMonthlyOrdersData] = useState([]);
-  const [activeOrdersData, setActiveOrdersData] = useState([]);
-  const [todayReservationsData, setTodayReservationsData] = useState([]);
-  const [monthlyReservationsData, setMonthlyReservationsData] = useState([]);
+  const [datosFiltrados, setDatosFiltrados] = useState<DatosDashboard>({
+    pedidosHoy: [],
+    pedidosMes: [],
+    pedidosActivos: [],
+    reservasHoy: [],
+    reservasMes: [],
+  });
 
   useEffect(() => {
-    const loadFilteredData = async () => {
-      const [todayOrd, monthOrd, activeOrd, todayRes, monthRes] = await Promise.all([
-        OrdersService.getToday(),
-        OrdersService.getThisMonth(),
-        OrdersService.getActive(),
-        ReservationsService.getToday(),
-        ReservationsService.getThisMonth(),
-      ]);
-      setTodayOrders(todayOrd);
-      setMonthlyOrdersData(monthOrd);
-      setActiveOrdersData(activeOrd);
-      setTodayReservationsData(todayRes);
-      setMonthlyReservationsData(monthRes);
-    };
-    loadFilteredData();
+    cargarDatosDashboard().then(setDatosFiltrados);
   }, [orders, allReservations]);
 
-  const stats = useMemo(() => {
-    const itemsWithPrice = menuItems.filter(item => item.price && item.price > 0);
-    const menuCount = itemsWithPrice.length;
-    const unavailableItems = itemsWithPrice.filter(item => item.stock < 1 || !item.available).length;
-
-    const totalSales = todayOrders.reduce((sum, order) => sum + parseNumber(order.total), 0);
-    const monthlySales = monthlyOrdersData.reduce((sum, order) => sum + parseNumber(order.total), 0);
-
-    return {
-      totalSales,
-      monthlySales,
-      activeOrders: activeOrdersData.length,
-      monthlyOrders: monthlyOrdersData.length,
-      todayReservations: todayReservationsData.length,
-      monthlyReservations: monthlyReservationsData.length,
-      menuItems: menuCount,
-      unavailableItems,
-    };
-  }, [menuItems, todayOrders, monthlyOrdersData, activeOrdersData, todayReservationsData, monthlyReservationsData]);
+  const stats = useMemo(
+    () => calcularEstadisticas(menuItems, datosFiltrados),
+    [menuItems, datosFiltrados]
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
