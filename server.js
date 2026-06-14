@@ -1,16 +1,14 @@
-// Servidor Node.js con Express para la API REST usando Supabase
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
-import { createClient } from '@supabase/supabase-js';
+import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
-// Cargar variables de entorno desde .env y .env.production
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,16 +17,24 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 80;
 
-// Configurar Supabase cliente
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Error: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY deben estar definidas en .env o .env.production');
+if (!DATABASE_URL) {
+  console.error('❌ Error: DATABASE_URL debe estar definida en las variables de entorno');
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const pool = new pg.Pool({
+  connectionString: DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
+
+pool.on('error', (err) => {
+  console.error('❌ PostgreSQL pool error:', err.message);
+});
 
 // Zod validation schemas
 const menuSchema = z.object({
@@ -67,309 +73,212 @@ const reservationSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Helper functions para mapeo de datos
-const mapMenuItem = (item) => ({
-  id: item.id,
-  name: item.nombre,
-  description: item.ingredientes,
-  price: item.precio,
-  category: item.categoria,
-  stock: item.stock,
-  available: item.stock > 0,
-  vegetariano: item.vegetariano,
-  gluten: item.gluten,
-  marisco: item.marisco,
-  lactosa: item.lactosa,
-  vegano: item.vegano,
-  ingredientes: item.ingredientes,
-  created_at: item.created_at,
-  updated_at: item.updated_at
+const mapMenuItem = (row) => ({
+  id: row.id,
+  name: row.nombre,
+  description: row.ingredientes,
+  price: parseFloat(row.precio),
+  category: row.categoria,
+  stock: row.stock,
+  available: row.stock > 0,
+  vegetariano: row.vegetariano,
+  gluten: row.gluten,
+  marisco: row.marisco,
+  lactosa: row.lactosa,
+  vegano: row.vegano,
+  ingredientes: row.ingredientes,
+  created_at: row.created_at,
+  updated_at: row.updated_at,
 });
 
-const mapOrder = (item) => {
-  let correctedTime = item.time;
+const mapOrder = (row) => {
+  let correctedTime = row.time;
   let formattedDateTime = null;
 
-  if (item.time) {
-    if (item.time.length === 5 && item.time.includes(':')) {
-      correctedTime = item.time;
-    } else if (item.time.length === 4 && item.time.includes(':')) {
-      correctedTime = '0' + item.time;
-    }
-
-    const date = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+  if (row.time) {
+    const t = row.time.toString();
+    correctedTime = t.length === 4 && t.includes(':') ? '0' + t : t.substring(0, 5);
+    const date = row.created_at
+      ? new Date(row.created_at).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
     formattedDateTime = `${date} ${correctedTime}`;
-  } else if (item.created_at) {
-    formattedDateTime = new Date(item.created_at).toISOString().replace('T', ' ').substring(0, 19);
-    correctedTime = new Date(item.created_at).toTimeString().substring(0, 5);
+  } else if (row.created_at) {
+    formattedDateTime = new Date(row.created_at).toISOString().replace('T', ' ').substring(0, 19);
+    correctedTime = new Date(row.created_at).toTimeString().substring(0, 5);
   }
 
   return {
-    id: item.id,
-    customer_name: item.nombre,
-    customer_phone: item.telefono,
+    id: row.id,
+    customer_name: row.nombre,
+    customer_phone: row.telefono,
     customer_email: null,
-    items: typeof item.items === 'string' ? JSON.parse(item.items) : item.items,
-    total: parseFloat(item.total),
-    status: item.status,
+    items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items,
+    total: parseFloat(row.total),
+    status: row.status,
     notes: null,
-    created_at: item.created_at,
+    created_at: row.created_at,
     time: correctedTime,
     order_datetime: formattedDateTime,
-    updated_at: item.updated_at
+    updated_at: row.updated_at,
   };
 };
 
-const mapReservation = (item, formatTime = false) => {
-  const mapped = {
-    id: item.id,
-    customer_name: item.customer_name,
-    phone: item.phone,
-    customer_email: null,
-    date: item.date,
-    time: item.time,
-    guests: item.people,
-    table_number: item.table_number,
-    status: item.status,
-    google_event_id: item.google_event_id,
-    notes: item.observations,
-    created_at: item.created_at,
-    updated_at: item.updated_at
-  };
-
-  // Formatear tiempo solo si se solicita (para POST donde puede ser TIME type)
-  if (formatTime && mapped.time) {
-    mapped.time = mapped.time.toString().substring(0, 5);
-  }
-
-  return mapped;
-};
+const mapReservation = (row, formatTime = false) => ({
+  id: row.id,
+  customer_name: row.customer_name,
+  phone: row.phone,
+  customer_email: null,
+  date: row.date,
+  time: formatTime && row.time ? row.time.toString().substring(0, 5) : row.time,
+  guests: row.people,
+  table_number: row.table_number,
+  status: row.status,
+  google_event_id: row.google_event_id,
+  notes: row.observations,
+  created_at: row.created_at,
+  updated_at: row.updated_at,
+});
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "https://*.neon.tech"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      fontSrc: ["'self'", "data:"],
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json());
-
-// Request logging
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 
-// Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 200, // 200 requests por ventana
-  message: { success: false, error: 'Too many requests, please try again later.' }
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { success: false, error: 'Too many requests, please try again later.' },
 });
 app.use('/api/', limiter);
-
-// Async handler helper
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ Unhandled error:', err.message);
-  res.status(err.status || 500).json({
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
-  });
-});
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, 'dist');
   app.use(express.static(distPath));
-
-  // Para cualquier ruta que no sea API, servir index.html (SPA routing)
-  // Usamos regex para compatibilidad con Express 5
   app.get(/^\/(?!api\/).*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
 
-// Healthcheck
+// ============================================
+// HEALTH
+// ============================================
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok' } });
 });
 
-// DB healthcheck
 app.get('/api/db-health', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('menu').select('count', { head: true });
-    res.json({
-      success: true,
-      data: {
-        status: 'ok',
-        supabase_connected: !error,
-        error: error ? error.message : null
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/analytics/sales-by-hour', async (req, res) => {
-  try {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('created_at, total')
-      .not('total', 'is', null);
-
-    if (error) throw error;
-
-    // Obtener mes y año actual
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-
-    // Filtrar órdenes del mes actual
-    const currentMonthOrders = (orders || []).filter(order => {
-      const orderDate = new Date(order.created_at);
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-    });
-
-    // Crear array de días del mes actual
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const salesByDay = Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1;
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      return { date: dateStr, sales: 0 };
-    });
-
-    // Sumar ventas por día
-    currentMonthOrders.forEach(order => {
-      const orderDate = new Date(order.created_at);
-      const day = orderDate.getDate();
-      salesByDay[day - 1].sales += parseFloat(order.total);
-    });
-
-    res.json(salesByDay);
-  } catch (error) {
-    console.error('❌ Error en GET /api/analytics/sales-by-hour:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const result = await pool.query('SELECT 1');
+    res.json({ success: true, data: { status: 'ok', db_connected: true } });
+  } catch (err) {
+    res.status(500).json({ success: false, data: { status: 'error', db_connected: false, error: err.message } });
   }
 });
 
 // ============================================
+// ANALYTICS
+// ============================================
+
+app.get('/api/analytics/sales-by-hour', async (req, res) => {
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { rows } = await pool.query(
+      `SELECT created_at, total FROM orders WHERE created_at >= $1`,
+      [monthStart]
+    );
+
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const salesByDay = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return { date: dateStr, sales: 0 };
+    });
+
+    rows.forEach((row) => {
+      const day = new Date(row.created_at).getDate();
+      salesByDay[day - 1].sales += parseFloat(row.total);
+    });
+
+    res.json(salesByDay);
+  } catch (err) {
+    console.error('❌ Error en GET /api/analytics/sales-by-hour:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ============================================
+// MENU
+// ============================================
 
 app.get('/api/menu', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('menu')
-      .select('*')
-      .order('id', { ascending: true });
-
-    if (error) throw error;
-
-    const mappedData = (data || []).map(mapMenuItem);
-
-    res.json({ success: true, data: mappedData });
-  } catch (error) {
-    console.error('❌ Error en GET /api/menu:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { rows } = await pool.query('SELECT * FROM menu ORDER BY id ASC');
+    res.json({ success: true, data: rows.map(mapMenuItem) });
+  } catch (err) {
+    console.error('❌ Error en GET /api/menu:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.post('/api/menu', async (req, res) => {
   try {
-    const validation = menuSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
-    }
+    const v = menuSchema.safeParse(req.body);
+    if (!v.success) return res.status(400).json({ success: false, error: v.error.errors.map(e => e.message).join(', ') });
 
-    const { name, description, price, category, stock, vegetariano, gluten, marisco, lactosa, vegano } = validation.data;
-
-    const { data, error } = await supabase
-      .from('menu')
-      .insert({
-        nombre: name,
-        categoria: category,
-        precio: price,
-        stock: stock,
-        vegetariano: vegetariano || 'no',
-        gluten: gluten || 'no',
-        marisco: marisco || 'no',
-        lactosa: lactosa || 'no',
-        vegano: vegano || 'no',
-        ingredientes: description
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const mappedItem = mapMenuItem(data);
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en POST /api/menu:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { name, price, category, stock, description, vegetariano, gluten, marisco, lactosa, vegano } = v.data;
+    const { rows } = await pool.query(
+      `INSERT INTO menu (nombre, categoria, precio, stock, ingredientes, vegetariano, gluten, marisco, lactosa, vegano)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [name, category, price, stock, description, vegetariano || 'no', gluten || 'no', marisco || 'no', lactosa || 'no', vegano || 'no']
+    );
+    res.json({ success: true, data: mapMenuItem(rows[0]) });
+  } catch (err) {
+    console.error('❌ Error en POST /api/menu:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.put('/api/menu/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      description,
-      price,
-      category,
-      stock,
-      available,
-      vegetariano,
-      gluten,
-      marisco,
-      lactosa,
-      vegano,
-      ingredientes
-    } = req.body;
-
-    const { data, error } = await supabase
-      .from('menu')
-      .update({
-        nombre: name,
-        categoria: category,
-        precio: price,
-        stock: stock,
-        vegetariano: vegetariano || 'no',
-        gluten: gluten || 'no',
-        marisco: marisco || 'no',
-        lactosa: lactosa || 'no',
-        vegano: vegano || 'no',
-        ingredientes: description || ingredientes,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const mappedItem = mapMenuItem(data);
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en PUT /api/menu/:id:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { name, description, ingredientes, price, category, stock, vegetariano, gluten, marisco, lactosa, vegano } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE menu SET nombre=$1, categoria=$2, precio=$3, stock=$4, ingredientes=$5,
+       vegetariano=$6, gluten=$7, marisco=$8, lactosa=$9, vegano=$10, updated_at=NOW()
+       WHERE id=$11 RETURNING *`,
+      [name, category, price, stock, description || ingredientes, vegetariano || 'no', gluten || 'no', marisco || 'no', lactosa || 'no', vegano || 'no', id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
+    res.json({ success: true, data: mapMenuItem(rows[0]) });
+  } catch (err) {
+    console.error('❌ Error en PUT /api/menu/:id:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.delete('/api/menu/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase
-      .from('menu')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
+    await pool.query('DELETE FROM menu WHERE id=$1', [id]);
     res.json({ success: true });
-  } catch (error) {
-    console.error('❌ Error en DELETE /api/menu/:id:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    console.error('❌ Error en DELETE /api/menu/:id:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -377,28 +286,20 @@ app.patch('/api/menu/:id/stock', async (req, res) => {
   try {
     const { id } = req.params;
     const { stock } = req.body;
-
-    const { data, error } = await supabase
-      .from('menu')
-      .update({
-        stock: stock,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    res.json({ success: true, data: data });
-  } catch (error) {
-    console.error('❌ Error en PATCH /api/menu/:id/stock:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { rows } = await pool.query(
+      'UPDATE menu SET stock=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
+      [stock, id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    console.error('❌ Error en PATCH /api/menu/:id/stock:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 // ============================================
-// ORDERS ENDPOINTS
+// ORDERS
 // ============================================
 
 app.get('/api/orders', async (req, res) => {
@@ -408,59 +309,43 @@ app.get('/api/orders', async (req, res) => {
     const today = now.toISOString().split('T')[0];
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    let query = supabase.from('orders').select('*');
+    let queryText = 'SELECT * FROM orders';
+    const params = [];
 
     if (filter === 'today') {
-      query = query.gte('created_at', today);
+      queryText += ' WHERE created_at >= $1';
+      params.push(today);
     } else if (filter === 'month') {
-      query = query.gte('created_at', monthStart);
+      queryText += ' WHERE created_at >= $1';
+      params.push(monthStart);
     } else if (filter === 'active') {
-      query = query.neq('status', 'delivered').neq('status', 'cancelled');
+      queryText += " WHERE status NOT IN ('delivered', 'cancelled')";
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    const mappedData = (data || []).map(mapOrder);
-
-    res.json({ success: true, data: mappedData });
-  } catch (error) {
-    console.error('❌ Error en GET /api/orders:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    queryText += ' ORDER BY created_at DESC';
+    const { rows } = await pool.query(queryText, params);
+    res.json({ success: true, data: rows.map(mapOrder) });
+  } catch (err) {
+    console.error('❌ Error en GET /api/orders:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const validation = orderSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
-    }
+    const v = orderSchema.safeParse(req.body);
+    if (!v.success) return res.status(400).json({ success: false, error: v.error.errors.map(e => e.message).join(', ') });
 
-    const { customer_name, customer_phone, items, total, status = 'pending' } = validation.data;
-
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        nombre: customer_name,
-        telefono: customer_phone,
-        direccion: 'Dirección no especificada',
-        items: JSON.stringify(items),
-        total: total,
-        status: status
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const mappedItem = mapOrder(data);
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en POST /api/orders:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { customer_name, customer_phone, items, total, status = 'pending' } = v.data;
+    const { rows } = await pool.query(
+      `INSERT INTO orders (nombre, telefono, direccion, items, total, status)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [customer_name, customer_phone, 'Dirección no especificada', JSON.stringify(items), total, status]
+    );
+    res.json({ success: true, data: mapOrder(rows[0]) });
+  } catch (err) {
+    console.error('❌ Error en POST /api/orders:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -468,48 +353,20 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    const { data, error } = await supabase
-      .from('orders')
-      .update({
-        status: status,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ success: false, error: 'Order not found' });
-      }
-      throw error;
-    }
-
-    const mappedItem = {
-      id: data.id,
-      customer_name: data.nombre,
-      customer_phone: data.telefono,
-      customer_email: null,
-      items: typeof data.items === 'string' ? JSON.parse(data.items) : data.items,
-      total: parseFloat(data.total),
-      status: data.status,
-      notes: null,
-      created_at: data.created_at,
-      time: data.time,
-      order_datetime: data.created_at,
-      updated_at: data.updated_at
-    };
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en PATCH /api/orders/:id/status:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { rows } = await pool.query(
+      'UPDATE orders SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
+      [status, id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Order not found' });
+    res.json({ success: true, data: mapOrder(rows[0]) });
+  } catch (err) {
+    console.error('❌ Error en PATCH /api/orders/:id/status:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 // ============================================
-// RESERVATIONS ENDPOINTS
+// RESERVATIONS
 // ============================================
 
 app.get('/api/reservations', async (req, res) => {
@@ -519,61 +376,41 @@ app.get('/api/reservations', async (req, res) => {
     const today = now.toISOString().split('T')[0];
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-    let query = supabase.from('reservations').select('*');
+    let queryText = 'SELECT * FROM reservations';
+    const params = [];
 
     if (filter === 'today') {
-      query = query.eq('date', today);
+      queryText += ' WHERE date = $1';
+      params.push(today);
     } else if (filter === 'month') {
-      query = query.gte('date', monthStart);
+      queryText += ' WHERE date >= $1';
+      params.push(monthStart);
     }
 
-    const { data, error } = await query
-      .order('date', { ascending: false })
-      .order('time', { ascending: false });
-
-    if (error) throw error;
-
-    const mappedData = (data || []).map(mapReservation);
-
-    res.json({ success: true, data: mappedData });
-  } catch (error) {
-    console.error('❌ Error en GET /api/reservations:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    queryText += ' ORDER BY date DESC, time DESC';
+    const { rows } = await pool.query(queryText, params);
+    res.json({ success: true, data: rows.map(r => mapReservation(r)) });
+  } catch (err) {
+    console.error('❌ Error en GET /api/reservations:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.post('/api/reservations', async (req, res) => {
   try {
-    const validation = reservationSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ success: false, error: validation.error.errors.map(e => e.message).join(', ') });
-    }
+    const v = reservationSchema.safeParse(req.body);
+    if (!v.success) return res.status(400).json({ success: false, error: v.error.errors.map(e => e.message).join(', ') });
 
-    const { customer_name, phone, date, time, guests, status = 'confirmed', notes } = validation.data;
-
-    const { data, error } = await supabase
-      .from('reservations')
-      .insert({
-        customer_name: customer_name,
-        phone: phone,
-        date: date,
-        time: time,
-        people: guests,
-        table_number: null,
-        status: status,
-        observations: notes
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    const mappedItem = mapReservation(data, true); // true = formatear tiempo
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en POST /api/reservations:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    const { customer_name, phone, date, time, guests, status = 'confirmed', notes } = v.data;
+    const { rows } = await pool.query(
+      `INSERT INTO reservations (customer_name, phone, date, time, people, table_number, status, observations)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [customer_name, phone, date, time, guests, null, status, notes]
+    );
+    res.json({ success: true, data: mapReservation(rows[0], true) });
+  } catch (err) {
+    console.error('❌ Error en POST /api/reservations:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -581,30 +418,26 @@ app.patch('/api/reservations/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE reservations SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
+      [status, id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Reservation not found' });
+    res.json({ success: true, data: mapReservation(rows[0]) });
+  } catch (err) {
+    console.error('❌ Error en PATCH /api/reservations/:id/status:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
-    const { data, error } = await supabase
-      .from('reservations')
-      .update({
-        status: status,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ success: false, error: 'Reservation not found' });
-      }
-      throw error;
-    }
-
-    const mappedItem = mapReservation(data);
-
-    res.json({ success: true, data: mappedItem });
-  } catch (error) {
-    console.error('❌ Error en PATCH /api/reservations/:id/status:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+app.delete('/api/reservations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM reservations WHERE id=$1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error en DELETE /api/reservations/:id:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -614,17 +447,8 @@ app.patch('/api/reservations/:id/status', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`✅ API server running on http://localhost:${port}`);
-  console.log(`📊 Database: Supabase (eyqumoiygfbfvxvzupgy.supabase.co)`);
-  console.log(`🔗 Conexión establecida con éxito!`);
+  console.log(`📊 Database: Neon PostgreSQL`);
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down gracefully...');
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('\n👋 Shutting down gracefully...');
-  process.exit(0);
-});
+process.on('SIGINT', () => { console.log('\n👋 Shutting down...'); process.exit(0); });
+process.on('SIGTERM', () => { console.log('\n👋 Shutting down...'); process.exit(0); });
