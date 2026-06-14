@@ -123,13 +123,13 @@ const mapOrder = (row) => {
   };
 };
 
-const mapReservation = (row, formatTime = false) => ({
+const mapReservation = (row) => ({
   id: row.id,
   customer_name: row.customer_name,
   phone: row.phone,
   customer_email: null,
-  date: row.date,
-  time: formatTime && row.time ? row.time.toString().substring(0, 5) : row.time,
+  date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date,
+  time: row.time ? row.time.toString().substring(0, 5) : row.time,
   guests: row.people,
   table_number: row.table_number,
   status: row.status,
@@ -407,7 +407,7 @@ app.post('/api/reservations', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [customer_name, phone, date, time, guests, null, status, notes]
     );
-    res.json({ success: true, data: mapReservation(rows[0], true) });
+    res.json({ success: true, data: mapReservation(rows[0]) });
   } catch (err) {
     console.error('❌ Error en POST /api/reservations:', err.message);
     res.status(500).json({ success: false, error: err.message });
