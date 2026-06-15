@@ -19,12 +19,12 @@ export function StockAlertsPanel() {
         variant={hasCritical ? "destructive" : "default"}
         className={
           hasCritical
-            ? "border-red-500 bg-red-50 dark:bg-red-950/20"
-            : "border-amber-400 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 [&>svg]:text-amber-500"
+            ? "py-2 border-red-500 bg-red-50 dark:bg-red-950/20"
+            : "py-2 border-amber-400 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 [&>svg]:text-amber-500"
         }
       >
         <AlertTriangle className="h-4 w-4" />
-        <div className="flex items-start justify-between w-full gap-2">
+        <div className="flex items-center justify-between w-full gap-2">
           <div className="flex-1 min-w-0">
             <AlertTitle className="text-sm font-semibold mb-0 flex flex-wrap items-center gap-1.5">
               Stock bajo
