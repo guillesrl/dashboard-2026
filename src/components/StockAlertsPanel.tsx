@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, PackageX } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStockAlerts, STOCK_LOW_THRESHOLD } from "@/hooks/use-stock-alerts";
@@ -26,25 +26,22 @@ export function StockAlertsPanel() {
         <AlertTriangle className="h-4 w-4" />
         <div className="flex items-start justify-between w-full gap-2">
           <div className="flex-1 min-w-0">
-            <AlertTitle className="text-sm font-semibold">
-              Alertas de stock bajo
+            <AlertTitle className="text-sm font-semibold mb-0 flex flex-wrap items-center gap-1.5">
+              Stock bajo
               {criticalCount > 0 && (
-                <Badge variant="destructive" className="ml-2 text-xs">
+                <Badge variant="destructive" className="text-xs">
                   {criticalCount} sin stock
                 </Badge>
               )}
               {lowCount > 0 && (
                 <Badge
                   variant="outline"
-                  className="ml-1 text-xs border-amber-400 text-amber-700 dark:text-amber-300"
+                  className="text-xs border-amber-400 text-amber-700 dark:text-amber-300"
                 >
                   {lowCount} bajo ({`<${STOCK_LOW_THRESHOLD}`})
                 </Badge>
               )}
             </AlertTitle>
-            <AlertDescription className="text-xs mt-1">
-              {totalAlerts} {totalAlerts === 1 ? "plato requiere" : "platos requieren"} atención en el inventario.
-            </AlertDescription>
 
             {expanded && (
               <div className="mt-3 space-y-1">
