@@ -23,10 +23,10 @@ export function StockAlertsPanel() {
             : "py-2 border-amber-400 bg-amber-50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 [&>svg]:text-amber-500"
         }
       >
-        <AlertTriangle className="h-4 w-4" />
         <div className="flex items-center justify-between w-full gap-2">
           <div className="flex-1 min-w-0">
             <AlertTitle className="text-sm font-semibold mb-0 flex flex-wrap items-center gap-1.5">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
               Stock bajo
               {criticalCount > 0 && (
                 <Badge variant="destructive" className="text-xs">
