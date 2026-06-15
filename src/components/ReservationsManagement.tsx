@@ -135,7 +135,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
       }
     })
     .sort((a, b) => {
-      const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateComparison !== 0) return dateComparison;
       return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
