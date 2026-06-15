@@ -160,7 +160,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
     <Card>
       <CardHeader>
         <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-4' : ''}`}>
-          <div>
+          <div className="flex items-baseline gap-2">
             <CardTitle className="text-base md:text-lg">Reservas</CardTitle>
             <CardDescription className="text-xs md:text-sm">Administra las reservas</CardDescription>
           </div>
