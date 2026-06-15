@@ -94,3 +94,13 @@ Failed to fetch dynamica
 - **Tarea**: Actualiza el readme de la web con las nuevas tecnologías
 - **Herramientas**: lectura de archivos, editor, bash
 - **Resultado**: Subido.
+
+## 2026-05-02 23:00
+- **Tarea**: Aplica los 3 cambios
+- **Herramientas**: lectura de archivos, editor, bash, búsqueda de contenido
+- **Resultado**: Subido.
+
+## 2026-05-03 16:43
+- **Tarea**: Puedes usar un comando de bash
+- **Herramientas**: bash
+- **Resultado**: CPU al 12.5% de uso (87.5% idle). Carga promedio: 0.47. Todo tranquilo.
