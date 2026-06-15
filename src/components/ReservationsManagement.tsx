@@ -174,7 +174,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
               </Button>
             </div>
             <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
-              <Label htmlFor="filterDate" className="whitespace-nowrap">Filtrar por fecha:</Label>
+              <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
               <Input
                 id="filterDate"
                 type="date"
