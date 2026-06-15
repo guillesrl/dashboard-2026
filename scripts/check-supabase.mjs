@@ -27,16 +27,8 @@ for (const envFile of envFiles) {
   }
 }
 
-// Si no encontró en archivos .env, usar valores hardcodeados del proyecto
-if (!supabaseUrl) {
-  console.log('⚠️  No se encontraron variables de entorno en .env');
-  console.log('Usando valores del proyecto (debes verificar que sean correctos)...\n');
-  supabaseUrl = 'https://eyqumoiygfbfvxvzupgy.supabase.co';
-  supabaseAnonKey = '***REMOVED***';
-}
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Credenciales de Supabase no configuradas');
+  console.error('❌ Credenciales de Supabase no configuradas. Define VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env');
   process.exit(1);
 }
 
