@@ -2,8 +2,9 @@ import { useState, Suspense, lazy, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun, BarChart3 } from "lucide-react";
+import { ChefHat, ShoppingCart, Calendar, TrendingUp, Moon, Sun, BarChart3, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getToken, clearToken } from "@/lib/auth";
 import { useTheme } from "next-themes";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMenu, useOrders, useReservations } from "@/hooks/use-queries";
@@ -66,15 +67,28 @@ const Index = () => {
                 <p className="text-sm md:text-base text-muted-foreground">Sistema de gestión para restaurantes</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+              {getToken() && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => { clearToken(); window.location.reload(); }}
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="sr-only">Cerrar sesión</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>

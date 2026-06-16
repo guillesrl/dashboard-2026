@@ -2,6 +2,8 @@
 // Cliente HTTP para comunicarse con una API REST
 // Esto evita el problema de usar pg directamente en el navegador
 
+import { getToken, handleUnauthorized } from './auth';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export interface ApiResponse<T> {
@@ -11,15 +13,34 @@ export interface ApiResponse<T> {
 }
 
 class ApiClient {
+  // Auth endpoints
+  async getAuthStatus() {
+    return this.request<{ enabled: boolean }>('/auth/status');
+  }
+
+  async login(password: string) {
+    return this.request<{ token: string | null; enabled?: boolean }>('/login', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     try {
+      const token = getToken();
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...options.headers,
         },
         ...options,
       });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return { success: false, error: 'No autorizado' };
+      }
 
       const data = await response.json();
 

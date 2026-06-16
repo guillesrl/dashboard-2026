@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
+import { authEnabled, createToken, checkPassword, requireAuth } from './auth.js';
+import { notifyTelegram } from './notify.js';
 
 dotenv.config();
 
@@ -180,6 +182,26 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok' } });
 });
 
+// ============================================
+// AUTH (rutas públicas)
+// ============================================
+
+app.get('/api/auth/status', (req, res) => {
+  res.json({ success: true, data: { enabled: authEnabled } });
+});
+
+app.post('/api/login', (req, res) => {
+  if (!authEnabled) return res.json({ success: true, data: { token: null, enabled: false } });
+  const { password } = req.body || {};
+  if (!checkPassword(password)) {
+    return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+  }
+  res.json({ success: true, data: { token: createToken() } });
+});
+
+// A partir de aquí, todas las rutas /api requieren autenticación
+app.use('/api', requireAuth);
+
 app.get('/api/db-health', async (req, res) => {
   try {
     const result = await pool.query('SELECT 1');
@@ -292,6 +314,10 @@ app.patch('/api/menu/:id/stock', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
     res.json({ success: true, data: rows[0] });
+    const newStock = Number(stock);
+    if (!Number.isNaN(newStock) && newStock < 5) {
+      notifyTelegram(`⚠️ <b>Stock bajo</b>\n${rows[0].nombre}: ${newStock} ud.`);
+    }
   } catch (err) {
     console.error('❌ Error en PATCH /api/menu/:id/stock:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -343,6 +369,7 @@ app.post('/api/orders', async (req, res) => {
       [customer_name, customer_phone, 'Dirección no especificada', JSON.stringify(items), total, status]
     );
     res.json({ success: true, data: mapOrder(rows[0]) });
+    notifyTelegram(`🧾 <b>Nuevo pedido</b>\n${customer_name}\n${items.length} artículo(s) · ${total.toFixed(2)}€`);
   } catch (err) {
     console.error('❌ Error en POST /api/orders:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -408,6 +435,7 @@ app.post('/api/reservations', async (req, res) => {
       [customer_name, phone, date, time, guests, null, status, notes]
     );
     res.json({ success: true, data: mapReservation(rows[0]) });
+    notifyTelegram(`🗓️ <b>Nueva reserva</b>\n${customer_name} · ${guests} pers.\n${date} ${time}${notes ? `\n📝 ${notes}` : ''}`);
   } catch (err) {
     console.error('❌ Error en POST /api/reservations:', err.message);
     res.status(500).json({ success: false, error: err.message });
