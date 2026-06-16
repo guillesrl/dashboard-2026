@@ -167,10 +167,12 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
           <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => exportReservationsToPDF(reservations, 'Reporte de Reservas')}>
-                <FileDown className="h-4 w-4" />
+                <FileDown className="h-4 w-4 mr-1" />
+                PDF
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportReservationsToExcel(reservations, 'Reporte de Reservas')}>
-                <FileDown className="h-4 w-4" />
+                <FileDown className="h-4 w-4 mr-1" />
+                XLS
               </Button>
             </div>
             <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
