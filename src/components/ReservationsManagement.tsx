@@ -182,7 +182,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className={isMobile ? 'flex-1' : 'w-[180px]'}
+                className={isMobile ? 'w-[150px]' : 'w-[180px]'}
               />
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -192,7 +192,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  {isMobile ? '' : 'Nueva Reserva'}
+                  Reservar Mesa
                 </Button>
               </DialogTrigger>
             <DialogContent>
