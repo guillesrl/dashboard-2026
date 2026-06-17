@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 import { authEnabled, createToken, checkPassword, requireAuth } from './auth.js';
-import { notifyTelegram } from './notify.js';
+import { notifyTelegram, telegramEnabled } from './notify.js';
 
 dotenv.config();
 
@@ -190,7 +190,7 @@ if (process.env.NODE_ENV === 'production') {
 // ============================================
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, data: { status: 'ok' } });
+  res.json({ success: true, data: { status: 'ok', telegram: telegramEnabled } });
 });
 
 // ============================================
