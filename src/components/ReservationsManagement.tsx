@@ -164,7 +164,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
             <CardTitle className="text-base md:text-lg">Reservas</CardTitle>
             <CardDescription className="text-xs md:text-sm">Administra las reservas</CardDescription>
           </div>
-          <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
+          <div className={`flex items-center gap-4 ${isMobile ? 'w-full flex-wrap gap-3' : ''}`}>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => exportReservationsToPDF(reservations, 'Reporte de Reservas')}>
                 <FileDown className="h-4 w-4 mr-1" />
@@ -175,7 +175,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                 XLS
               </Button>
             </div>
-            <div className={`flex items-center gap-2 ${isMobile ? 'flex-1' : ''}`}>
+            <div className={`flex items-center gap-2 ${isMobile ? 'w-full order-last' : ''}`}>
               <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
               <Input
                 id="filterDate"
