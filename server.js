@@ -125,6 +125,17 @@ const mapOrder = (row) => {
   };
 };
 
+const STOCK_LOW_THRESHOLD = 5;
+
+// Avisa de stock bajo solo cuando el stock baja realmente respecto al valor anterior.
+const notifyLowStock = (nombre, newStockRaw, prevStockRaw) => {
+  const newStock = Number(newStockRaw);
+  const prevStock = Number(prevStockRaw);
+  if (Number.isNaN(newStock) || newStock >= STOCK_LOW_THRESHOLD) return;
+  if (!Number.isNaN(prevStock) && newStock >= prevStock) return; // no bajó
+  notifyTelegram(`⚠️ <b>Stock bajo</b>\n${nombre}: ${newStock} ud.`);
+};
+
 const mapReservation = (row) => ({
   id: row.id,
   customer_name: row.customer_name,
@@ -297,6 +308,7 @@ app.put('/api/menu/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, ingredientes, price, category, stock, vegetariano, gluten, marisco, lactosa, vegano } = req.body;
+    const prev = await pool.query('SELECT stock FROM menu WHERE id=$1', [id]);
     const { rows } = await pool.query(
       `UPDATE menu SET nombre=$1, categoria=$2, precio=$3, stock=$4, ingredientes=$5,
        vegetariano=$6, gluten=$7, marisco=$8, lactosa=$9, vegano=$10, updated_at=NOW()
@@ -305,10 +317,7 @@ app.put('/api/menu/:id', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
     res.json({ success: true, data: mapMenuItem(rows[0]) });
-    const newStock = Number(stock);
-    if (!Number.isNaN(newStock) && newStock < 5) {
-      notifyTelegram(`⚠️ <b>Stock bajo</b>\n${rows[0].nombre}: ${newStock} ud.`);
-    }
+    notifyLowStock(rows[0].nombre, stock, prev.rows[0]?.stock);
   } catch (err) {
     console.error('❌ Error en PUT /api/menu/:id:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -330,16 +339,14 @@ app.patch('/api/menu/:id/stock', async (req, res) => {
   try {
     const { id } = req.params;
     const { stock } = req.body;
+    const prev = await pool.query('SELECT stock FROM menu WHERE id=$1', [id]);
     const { rows } = await pool.query(
       'UPDATE menu SET stock=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
       [stock, id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
     res.json({ success: true, data: rows[0] });
-    const newStock = Number(stock);
-    if (!Number.isNaN(newStock) && newStock < 5) {
-      notifyTelegram(`⚠️ <b>Stock bajo</b>\n${rows[0].nombre}: ${newStock} ud.`);
-    }
+    notifyLowStock(rows[0].nombre, stock, prev.rows[0]?.stock);
   } catch (err) {
     console.error('❌ Error en PATCH /api/menu/:id/stock:', err.message);
     res.status(500).json({ success: false, error: err.message });

@@ -3,7 +3,7 @@ import { AlertTriangle, ChevronDown, ChevronUp, PackageX } from "lucide-react";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useStockAlerts, STOCK_LOW_THRESHOLD } from "@/hooks/use-stock-alerts";
+import { useStockAlerts } from "@/hooks/use-stock-alerts";
 
 export function StockAlertsPanel() {
   const { alerts, criticalCount, lowCount, totalAlerts } = useStockAlerts();
@@ -38,7 +38,7 @@ export function StockAlertsPanel() {
                   variant="outline"
                   className="text-xs border-amber-400 text-amber-700 dark:text-amber-300"
                 >
-                  {lowCount} bajo ({`<${STOCK_LOW_THRESHOLD}`})
+                  {lowCount} bajo
                 </Badge>
               )}
             </AlertTitle>
