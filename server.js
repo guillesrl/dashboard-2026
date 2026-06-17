@@ -67,7 +67,7 @@ const orderSchema = z.object({
 
 const reservationSchema = z.object({
   customer_name: z.string().min(1).max(255),
-  phone: z.string().min(1),
+  customer_phone: z.string().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   guests: z.number().int().min(1),
@@ -128,7 +128,7 @@ const mapOrder = (row) => {
 const mapReservation = (row) => ({
   id: row.id,
   customer_name: row.customer_name,
-  phone: row.phone,
+  customer_phone: row.phone,
   customer_email: null,
   date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date,
   time: row.time ? row.time.toString().substring(0, 5) : row.time,
@@ -446,11 +446,11 @@ app.post('/api/reservations', async (req, res) => {
     const v = reservationSchema.safeParse(req.body);
     if (!v.success) return res.status(400).json({ success: false, error: v.error.errors.map(e => e.message).join(', ') });
 
-    const { customer_name, phone, date, time, guests, status = 'confirmed', notes } = v.data;
+    const { customer_name, customer_phone, date, time, guests, status = 'confirmed', notes } = v.data;
     const { rows } = await pool.query(
       `INSERT INTO reservations (customer_name, phone, date, time, people, table_number, status, observations)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [customer_name, phone, date, time, guests, null, status, notes]
+      [customer_name, customer_phone || null, date, time, guests, null, status, notes]
     );
     res.json({ success: true, data: mapReservation(rows[0]) });
     notifyTelegram(`🗓️ <b>Nueva reserva</b>\n${customer_name} · ${guests} pers.\n${date} ${time}${notes ? `\n📝 ${notes}` : ''}`);
