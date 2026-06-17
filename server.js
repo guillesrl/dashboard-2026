@@ -305,6 +305,10 @@ app.put('/api/menu/:id', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Not found' });
     res.json({ success: true, data: mapMenuItem(rows[0]) });
+    const newStock = Number(stock);
+    if (!Number.isNaN(newStock) && newStock < 5) {
+      notifyTelegram(`⚠️ <b>Stock bajo</b>\n${rows[0].nombre}: ${newStock} ud.`);
+    }
   } catch (err) {
     console.error('❌ Error en PUT /api/menu/:id:', err.message);
     res.status(500).json({ success: false, error: err.message });
