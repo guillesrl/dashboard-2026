@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Calendar, Clock, Users, Phone, CheckCircle, XCircle, FileDown } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationsManagementProps {
   reservations: Reservation[];
@@ -63,7 +62,6 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
     status: "confirmed" as const,
     notes: ""
   });
-  const isMobile = useIsMobile();
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const statusOptions = [
@@ -186,13 +184,12 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
   return (
     <Card>
       <CardHeader>
-        <div className={`flex justify-between items-center ${isMobile ? 'flex-col gap-4' : ''}`}>
-          <div className="flex items-baseline gap-2">
+        <div className="flex justify-between items-center">
+          <div>
             <CardTitle className="text-base md:text-lg">Reservas</CardTitle>
             <CardDescription className="text-xs md:text-sm">Administra las reservas</CardDescription>
           </div>
-          <div className={`flex items-center gap-4 ${isMobile ? 'w-full flex-wrap gap-3' : ''}`}>
-            <div className="flex gap-2">
+          <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => exportReservationsToPDF(reservations, 'Reporte de Reservas')}>
                 <FileDown className="h-4 w-4 mr-1" />
                 PDF
@@ -201,35 +198,6 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                 <FileDown className="h-4 w-4 mr-1" />
                 XLS
               </Button>
-            </div>
-            <div className={`flex items-center gap-2 ${isMobile ? 'w-full order-last' : ''}`}>
-              <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
-              <Input
-                id="filterDate"
-                type="text"
-                inputMode="numeric"
-                placeholder="dd/mm"
-                value={filterDayMonth}
-                onChange={(e) => handleDayMonthChange(e.target.value)}
-                className="w-[90px]"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => calendarRef.current?.showPicker?.()}
-                aria-label="Elegir fecha del calendario"
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-              <input
-                ref={calendarRef}
-                type="date"
-                className="sr-only"
-                tabIndex={-1}
-                value={filterDate}
-                onChange={(e) => handleCalendarPick(e.target.value)}
-              />
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
               setDialogOpen(open);
@@ -320,7 +288,35 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
               </form>
             </DialogContent>
           </Dialog>
-          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
+          <Input
+            id="filterDate"
+            type="text"
+            inputMode="numeric"
+            placeholder="dd/mm"
+            value={filterDayMonth}
+            onChange={(e) => handleDayMonthChange(e.target.value)}
+            className="w-[90px]"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => calendarRef.current?.showPicker?.()}
+            aria-label="Elegir fecha del calendario"
+          >
+            <Calendar className="h-4 w-4" />
+          </Button>
+          <input
+            ref={calendarRef}
+            type="date"
+            className="sr-only"
+            tabIndex={-1}
+            value={filterDate}
+            onChange={(e) => handleCalendarPick(e.target.value)}
+          />
         </div>
       </CardHeader>
       <CardContent>
