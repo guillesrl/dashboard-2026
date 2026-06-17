@@ -193,7 +193,7 @@ const Index = () => {
                     </ChunkErrorBoundary>
                   </TabsContent>
 
-                  <TabsContent value="orders" className="space-y-4">
+                  <TabsContent value="orders" className="mt-0 h-full">
                     <ChunkErrorBoundary>
                       <Suspense fallback={<TabLoader />}><OrdersManagement /></Suspense>
                     </ChunkErrorBoundary>
