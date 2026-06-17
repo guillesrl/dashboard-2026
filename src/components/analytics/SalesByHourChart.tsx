@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { DateRange, toISODate } from '@/lib/dateRange';
 
 // Definimos el tipo de dato para ventas por día
 export interface SalesData {
@@ -16,13 +17,18 @@ const tooltipStyle = {
   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
 };
 
-const SalesByHourChart: React.FC = () => {
+const SalesByHourChart: React.FC<{ range: DateRange }> = ({ range }) => {
+  const from = toISODate(range.from);
+  const to = toISODate(range.to);
   const { data, isLoading, error } = useQuery<SalesData[]>({
-    queryKey: ['salesByDay'],
+    queryKey: ['salesByDay', from, to],
     queryFn: async () => {
-      const res = await fetch('/api/analytics/sales-by-hour');
+      const token = localStorage.getItem('dashboard_token');
+      const res = await fetch(`/api/analytics/sales-by-hour?from=${from}&to=${to}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) {
-        throw new Error('Error al obtener datos de ventas mensuales');
+        throw new Error('Error al obtener datos de ventas');
       }
       return res.json();
     },
@@ -31,11 +37,11 @@ const SalesByHourChart: React.FC = () => {
   if (isLoading) return <div className="text-center text-sm text-muted-foreground py-8">Cargando...</div>;
   if (error) return <div className="text-center text-sm text-destructive py-8">Error: {error.message}</div>;
 
-  // Extraer solo el día para mostrar en el eje X (1, 2, 3...)
-  const chartData = data?.map(item => ({
-    ...item,
-    day: new Date(item.date).getDate().toString()
-  })) || [];
+  // Etiqueta de eje X como D/M (evita ambigüedad entre meses)
+  const chartData = data?.map(item => {
+    const d = new Date(`${item.date}T12:00:00`);
+    return { ...item, day: `${d.getDate()}/${d.getMonth() + 1}` };
+  }) || [];
 
   if (chartData.every(d => !d.sales)) {
     return <div className="text-center text-sm text-muted-foreground py-8">Sin ventas este mes</div>;

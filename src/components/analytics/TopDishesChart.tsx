@@ -9,21 +9,25 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { OrdersService } from "@/services/ordersService";
+import { DateRange, inRange } from "@/lib/dateRange";
 
 interface DishCount {
   name: string;
   quantity: number;
 }
 
-export function TopDishesChart() {
+export function TopDishesChart({ range }: { range: DateRange }) {
   const [data, setData] = useState<DishCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     OrdersService.getAll()
       .then((orders) => {
         const counts: Record<string, number> = {};
-        orders.forEach((order) => {
+        orders
+          .filter((order) => inRange(order.created_at, range))
+          .forEach((order) => {
           (order.items || []).forEach((item) => {
             counts[item.name] = (counts[item.name] || 0) + item.quantity;
           });
@@ -36,7 +40,7 @@ export function TopDishesChart() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
   if (loading) return <div className="text-center py-8">Cargando...</div>;
 

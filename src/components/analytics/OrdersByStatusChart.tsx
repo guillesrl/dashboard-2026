@@ -10,6 +10,7 @@ import {
   Cell,
 } from "recharts";
 import { OrdersService } from "@/services/ordersService";
+import { DateRange, inRange } from "@/lib/dateRange";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#eab308",
@@ -33,15 +34,18 @@ interface StatusCount {
   count: number;
 }
 
-export function OrdersByStatusChart() {
+export function OrdersByStatusChart({ range }: { range: DateRange }) {
   const [data, setData] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     OrdersService.getAll()
       .then((orders) => {
         const counts: Record<string, number> = {};
-        orders.forEach((order) => {
+        orders
+          .filter((order) => inRange(order.created_at, range))
+          .forEach((order) => {
           const s = order.status || "pending";
           counts[s] = (counts[s] || 0) + 1;
         });
@@ -54,7 +58,7 @@ export function OrdersByStatusChart() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
   if (loading) return <div className="text-center py-8">Cargando...</div>;
 

@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { OrdersService } from "@/services/ordersService";
 import { ReservationsService } from "@/services/reservationsService";
+import { DateRange, toISODate } from "@/lib/dateRange";
 
 interface DayData {
   day: string;
@@ -28,48 +29,50 @@ const tooltipStyle = {
   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
 };
 
-export function ReservationsVsOrdersChart() {
+export function ReservationsVsOrdersChart({ range }: { range: DateRange }) {
   const [data, setData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([OrdersService.getAll(), ReservationsService.getAll()])
       .then(([orders, reservations]) => {
-        // Construir mapa de los últimos 30 días
+        // Construir buckets por día dentro del rango seleccionado
         const days: Record<string, { pedidos: number; reservas: number }> = {};
-        const now = new Date();
-        for (let i = 29; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(d.getDate() - i);
-          const key = d.toISOString().split("T")[0];
+        const order: string[] = [];
+        const cur = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
+        const last = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate());
+        while (cur <= last) {
+          const key = toISODate(cur);
           days[key] = { pedidos: 0, reservas: 0 };
+          order.push(key);
+          cur.setDate(cur.getDate() + 1);
         }
 
-        orders.forEach((order) => {
-          const key = (order.created_at || "").split("T")[0];
+        orders.forEach((o) => {
+          const key = (o.created_at || "").split("T")[0];
           if (days[key]) days[key].pedidos++;
         });
 
         reservations.forEach((res) => {
-          const key = res.date;
-          if (days[key]) days[key].reservas++;
+          if (days[res.date]) days[res.date].reservas++;
         });
 
         setData(
-          Object.entries(days).map(([date, counts]) => ({
-            day: new Date(date + "T12:00:00").getDate().toString(),
-            ...counts,
-          }))
+          order.map((date) => {
+            const d = new Date(`${date}T12:00:00`);
+            return { day: `${d.getDate()}/${d.getMonth() + 1}`, ...days[date] };
+          })
         );
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
   if (loading) return <div className="text-center text-sm text-muted-foreground py-8">Cargando...</div>;
 
   const hasData = data.some((d) => d.pedidos > 0 || d.reservas > 0);
-  if (!hasData) return <div className="text-center text-sm text-muted-foreground py-8">Sin datos en los últimos 30 días</div>;
+  if (!hasData) return <div className="text-center text-sm text-muted-foreground py-8">Sin datos en el periodo</div>;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
