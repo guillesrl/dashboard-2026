@@ -290,7 +290,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
           </Dialog>
         </div>
         <div className="flex items-center gap-2 mt-3">
-          <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
+          <Label htmlFor="filterDate" className="whitespace-nowrap">Buscar reservas por día:</Label>
           <Input
             id="filterDate"
             type="text"
@@ -346,7 +346,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {new Date(reservation.date).toLocaleDateString('es-ES')}
+                      {new Date(reservation.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
                     </div>
                   </TableCell>
                   <TableCell>
