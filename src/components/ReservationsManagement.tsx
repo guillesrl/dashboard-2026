@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Reservation } from "@/services/reservationsService";
 import { useCreateReservation, useUpdateReservationStatus } from "@/hooks/use-queries";
 import { exportReservationsToPDF, exportReservationsToExcel } from "@/lib/export";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Calendar, Clock, Users, Phone, CheckCircle, XCircle, FileDown } from "lucide-react";
+import { Calendar, Clock, Users, Phone, CheckCircle, XCircle, FileDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ReservationsManagementProps {
@@ -27,6 +27,33 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
   const [dialogOpen, setDialogOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState("");
+  const [filterDayMonth, setFilterDayMonth] = useState("");
+  const calendarRef = useRef<HTMLInputElement>(null);
+
+  // El usuario teclea solo día/mes (dd/mm); el año es el actual.
+  const handleDayMonthChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    const formatted = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    setFilterDayMonth(formatted);
+
+    if (digits.length === 4) {
+      const dd = digits.slice(0, 2);
+      const mm = digits.slice(2);
+      const d = parseInt(dd, 10);
+      const m = parseInt(mm, 10);
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+        setFilterDate(`${new Date().getFullYear()}-${mm}-${dd}`);
+        return;
+      }
+    }
+    setFilterDate("");
+  };
+
+  // El botón calendario permite elegir una fecha completa (incluido el año).
+  const handleCalendarPick = (value: string) => {
+    setFilterDate(value);
+    setFilterDayMonth(value ? `${value.slice(8, 10)}/${value.slice(5, 7)}` : "");
+  };
   const [formData, setFormData] = useState({
     customer_name: "",
     customer_phone: "",
@@ -179,10 +206,29 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
               <Label htmlFor="filterDate" className="whitespace-nowrap">Fecha:</Label>
               <Input
                 id="filterDate"
+                type="text"
+                inputMode="numeric"
+                placeholder="dd/mm"
+                value={filterDayMonth}
+                onChange={(e) => handleDayMonthChange(e.target.value)}
+                className="w-[90px]"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => calendarRef.current?.showPicker?.()}
+                aria-label="Elegir fecha del calendario"
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
+              <input
+                ref={calendarRef}
                 type="date"
+                className="sr-only"
+                tabIndex={-1}
                 value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className={isMobile ? 'w-[150px]' : 'w-[180px]'}
+                onChange={(e) => handleCalendarPick(e.target.value)}
               />
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -191,7 +237,6 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
             }}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
                   Reservar Mesa
                 </Button>
               </DialogTrigger>

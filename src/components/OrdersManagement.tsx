@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, Fragment } from "react";
 import { OrdersService, Order, OrderItem } from "@/services/ordersService";
 import { useOrders, useCreateOrder, useUpdateOrderStatus, useMenu } from "@/hooks/use-queries";
 import { exportOrdersToPDF, exportOrdersToExcel } from "@/lib/export";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Clock, CheckCircle, XCircle, AlertCircle, FileDown } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, AlertCircle, FileDown, ChevronRight, ChevronDown } from "lucide-react";
 import { parseNumber } from "@/lib/utils";
 
 
@@ -34,6 +34,7 @@ function OrdersManagementComponent() {
   });
   const [selectedItem, setSelectedItem] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const statusOptions = [
     { value: "pending", label: "Pendiente", color: "bg-yellow-500" },
@@ -378,10 +379,9 @@ function OrdersManagementComponent() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Teléfono</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Hora</TableHead>
@@ -391,27 +391,24 @@ function OrdersManagementComponent() {
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay pedidos registrados
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
-                <TableRow key={order.id}>
+              orders.map((order) => {
+                const isExpanded = expandedId === order.id;
+                return (
+                <Fragment key={order.id}>
+                <TableRow
+                  className="cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                >
+                  <TableCell className="text-muted-foreground">
+                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </TableCell>
                   <TableCell className="font-medium">{order.customer_name}</TableCell>
                   <TableCell>{order.customer_phone}</TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {Array.isArray(order.items) && order.items.length > 0 ? (
-                        order.items.map((item: OrderItem, idx: number) => (
-                          <div key={idx}>{item.quantity}x {item.name}</div>
-                        ))
-                      ) : (
-                        <div className="text-muted-foreground">Items no disponibles</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>${parseNumber(order.total).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge className={`${statusOptions.find(s => s.value === order.status)?.color || 'bg-gray-500'}`}>
                       <span className="flex items-center gap-1">
@@ -426,7 +423,7 @@ function OrdersManagementComponent() {
                   <TableCell>
                     {formatTimeForDisplay(order.time)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <Select
                       value={order.status}
                       onValueChange={(value: Order['status']) => handleUpdateOrderStatus(order.id, value)}
@@ -444,7 +441,31 @@ function OrdersManagementComponent() {
                     </Select>
                   </TableCell>
                 </TableRow>
-              ))
+                {isExpanded && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="bg-muted/30">
+                      <div className="space-y-1 py-1">
+                        {Array.isArray(order.items) && order.items.length > 0 ? (
+                          order.items.map((item: OrderItem, idx: number) => (
+                            <div key={idx} className="flex justify-between text-sm max-w-sm">
+                              <span>{item.quantity}x {item.name}</span>
+                              <span className="text-muted-foreground">${(parseNumber(item.price) * item.quantity).toFixed(2)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">Items no disponibles</div>
+                        )}
+                        <div className="flex justify-between text-sm font-bold border-t pt-1 mt-1 max-w-sm">
+                          <span>Total</span>
+                          <span>${parseNumber(order.total).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>
