@@ -1,5 +1,5 @@
 // Rango de fechas compartido para Analíticas.
-export type RangeKey = "today" | "7d" | "30d" | "month" | "custom";
+export type RangeKey = "today" | "7d" | "30d" | "90d" | "custom";
 
 export interface DateRange {
   from: Date;
@@ -10,7 +10,7 @@ export const RANGE_PRESETS: { key: RangeKey; label: string }[] = [
   { key: "today", label: "Hoy" },
   { key: "7d", label: "7 días" },
   { key: "30d", label: "30 días" },
-  { key: "month", label: "Mes" },
+  { key: "90d", label: "90 días" },
   { key: "custom", label: "Personalizado" },
 ];
 
@@ -38,8 +38,11 @@ export function computeRange(key: RangeKey, customFrom?: string, customTo?: stri
       f.setDate(f.getDate() - 29);
       return { from: startOfDay(f), to: endOfDay(now) };
     }
-    case "month":
-      return { from: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0), to: endOfDay(now) };
+    case "90d": {
+      const f = new Date(now);
+      f.setDate(f.getDate() - 89);
+      return { from: startOfDay(f), to: endOfDay(now) };
+    }
     case "custom": {
       const f = customFrom ? startOfDay(new Date(`${customFrom}T12:00:00`)) : startOfDay(now);
       const t = customTo ? endOfDay(new Date(`${customTo}T12:00:00`)) : endOfDay(now);

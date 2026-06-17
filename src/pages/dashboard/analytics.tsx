@@ -12,7 +12,7 @@ import { TrendingUp, Star, Clock, XCircle } from "lucide-react";
 export default function AnalyticsPage() {
   const { data: orders = [] } = useOrders();
 
-  const [rangeKey, setRangeKey] = useState<RangeKey>("month");
+  const [rangeKey, setRangeKey] = useState<RangeKey>("90d");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
