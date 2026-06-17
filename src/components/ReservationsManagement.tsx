@@ -323,13 +323,13 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Hora</TableHead>
-              <TableHead>Personas</TableHead>
-              <TableHead>Mesa</TableHead>
-              <TableHead>Teléfono</TableHead>
+              <TableHead>Nombre</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Personas</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead>Mesa</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -343,7 +343,6 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
             ) : (
               filteredReservations.map((reservation) => (
                 <TableRow key={reservation.id}>
-                  <TableCell className="font-medium">{reservation.customer_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -356,14 +355,20 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                       {reservation.time.substring(0, 5)}
                     </div>
                   </TableCell>
+                  <TableCell className="font-medium">{reservation.customer_name}</TableCell>
+                  <TableCell>
+                    <Badge className={`${statusOptions.find(s => s.value === reservation.status)?.color}`}>
+                      <span className="flex items-center gap-1">
+                        {getStatusIcon(reservation.status)}
+                        {statusOptions.find(s => s.value === reservation.status)?.label}
+                      </span>
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       {reservation.guests}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {reservation.table_number || '-'}
                   </TableCell>
                   <TableCell>
                     {reservation.customer_phone && (
@@ -374,12 +379,7 @@ export function ReservationsManagement({ reservations, isLoading }: Reservations
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={`${statusOptions.find(s => s.value === reservation.status)?.color}`}>
-                      <span className="flex items-center gap-1">
-                        {getStatusIcon(reservation.status)}
-                        {statusOptions.find(s => s.value === reservation.status)?.label}
-                      </span>
-                    </Badge>
+                    {reservation.table_number || '-'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Select
