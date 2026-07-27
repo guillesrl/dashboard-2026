@@ -7,12 +7,14 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **Gestión de Menú**: CRUD completo para items del menú con categorías y stock
 - **Gestión de Pedidos**: Sistema de pedidos con estados y seguimiento
 - **Gestión de Reservas**: Sistema de reservas con filtro por fecha y actualización en tiempo real
-- **Base de Datos**: Supabase (PostgreSQL) para almacenamiento persistente
+- **Base de Datos**: PostgreSQL vía conexión directa (`DATABASE_URL`, driver `pg`). El backend NO usa el cliente de Supabase para datos.
 - **Interfaz Moderna**: React + TypeScript + Tailwind CSS + shadcn/ui
-- **Tiempo Real**: Supabase Realtime para notificaciones instantáneas de nuevos pedidos y reservas
+- **Tiempo Real**: Supabase Realtime (solo en el frontend) para notificaciones instantáneas de nuevos pedidos y reservas
+- **Notificaciones Telegram**: Avisos a Telegram en nuevos pedidos, reservas y stock bajo (opcional, vía `TELEGRAM_BOT_TOKEN`)
+- **Autenticación**: Login opcional con contraseña + token propio (JWT firmado); protege todas las rutas `/api` si `DASHBOARD_PASSWORD` está definida
 - **Analíticas**: KPIs (ticket promedio, plato estrella, hora pico, tasa de cancelación) + 4 gráficos interactivos
 - **Exportación**: Reportes en PDF y Excel para pedidos, reservas y menú
-- **Seguridad**: Helmet, rate-limiting y logging con Morgan en el servidor
+- **Seguridad**: Helmet, rate-limiting, logging con Morgan y validación con Zod en el servidor
 - **Server-side Rendering**: Express sirve tanto API como frontend estático
 
 ## 🛠️ Tecnologías
@@ -25,7 +27,7 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 - **shadcn/ui** - Componentes UI
 - **Lucide React** - Iconos
 - **React Query** - Gestión de estado del servidor con cache automático e invalidación inteligente
-- **Supabase Realtime** - Suscripciones en tiempo real a cambios en la base de datos
+- **Supabase Realtime** - Único uso de Supabase: suscripciones en tiempo real a cambios en `orders`, `reservations` y `menu` (client-side)
 - **jsPDF + jspdf-autotable** - Exportación de reportes a PDF
 - **xlsx** - Exportación de reportes a Excel
 - **Vitest + Testing Library** - Tests unitarios y de componentes
@@ -34,8 +36,11 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 ### Backend
 - **Node.js 20+** - Runtime del servidor
 - **Express.js 5** - Framework web
-- **Supabase** - Base de datos PostgreSQL como servicio
-- **@supabase/supabase-js** - Cliente oficial de Supabase
+- **PostgreSQL** - Base de datos, conexión directa vía `DATABASE_URL`
+- **pg** - Driver de PostgreSQL (Pool de conexiones)
+- **Zod** - Validación de payloads en la API
+- **Auth propia** (`auth.js`) - Token JWT firmado con `JWT_SECRET`; login por `DASHBOARD_PASSWORD`
+- **Notificaciones Telegram** (`notify.js`) - Avisos vía Bot API (tolerante a fallo)
 - **Helmet** - Headers de seguridad HTTP
 - **express-rate-limit** - Limitación de peticiones (200 req/15min)
 - **Morgan** - Logging de requests
@@ -44,8 +49,9 @@ Panel de administración para restaurante con gestión de menú, pedidos y reser
 
 ## 📋 Requisitos Previos
 
-- Node.js 20+ (Node.js 18 está deprecated para Supabase)
-- Cuenta en Supabase (proyecto configurado)
+- Node.js 20+
+- Una base de datos PostgreSQL accesible (cadena `DATABASE_URL`)
+- Cuenta en Supabase solo si quieres Realtime en el frontend
 - npm o yarn
 
 ## 🚀 Instalación y Configuración
@@ -62,9 +68,12 @@ npm install
 ```
 
 ### 3. Configurar variables de entorno
-Crear archivo `.env` con:
+Crear archivo `.env` (ver `.env.example`):
 ```env
-# Configuración Supabase
+# Base de datos (obligatorio) — Postgres directo
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# Supabase (solo Realtime en el frontend)
 VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=***REMOVED***...
 VITE_API_URL=/api
@@ -72,12 +81,20 @@ VITE_API_URL=/api
 # Servidor
 PORT=8080
 NODE_ENV=development
+
+# Auth (opcional) — si DASHBOARD_PASSWORD está vacía, la auth queda deshabilitada
+DASHBOARD_PASSWORD=
+JWT_SECRET=
+
+# Notificaciones Telegram (opcional)
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ```
 
-**Nota**: Para EasyPanel, usa el archivo `.env.production` con las mismas variables.
+**Nota**: Para EasyPanel, usa las mismas variables en la configuración del servicio.
 
 ### 4. Base de Datos
-El proyecto usa Supabase. Asegúrate de que tu proyecto Supabase tenga las siguientes tablas:
+El backend se conecta a PostgreSQL vía `DATABASE_URL` (con `pg`). Asegúrate de que la base tenga las siguientes tablas:
 
 #### Tabla `menu`
 ```sql
@@ -177,11 +194,20 @@ npm start
 ### Variables de entorno (EasyPanel)
 
 ```env
-# Supabase
+# Base de datos (obligatorio)
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# Supabase (solo Realtime frontend)
 VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=***REMOVED***...
 PORT=80
 NODE_ENV=production
+
+# Auth y notificaciones (opcionales)
+DASHBOARD_PASSWORD=
+JWT_SECRET=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 
 # Opcional: forzar versión de Node.js
 NODE_VERSION=20
@@ -193,33 +219,42 @@ NODE_VERSION=20
 - `NODE_ENV=production` hace que `npm ci` omita las devDependencies, por lo que ningún devDependency puede ser importado estáticamente en `vite.config.ts`.
 - `rollup-plugin-visualizer` (solo para análisis local con `npm run analyze`) se importa de forma dinámica para evitar este error.
 - El archivo `.npmrc` incluye `legacy-peer-deps=true` para que npm v10 no falle por conflictos de peer dependencies entre `vitest@4.x` y `vite@5.x`.
-- Los módulos nativos (`sqlite3`, `pg`) no deben incluirse en las dependencias si no se usan: requieren herramientas de compilación (python, g++, make) ausentes en la imagen.
+- `pg` (driver de PostgreSQL) es dependencia obligatoria y compila sin problemas en la imagen. Evita añadir módulos nativos que NO uses (p. ej. `sqlite3`), que requieren herramientas de compilación ausentes.
 
 ### Estructura del Servidor
 
 - **API Endpoints**: `/api/*` - manejados por Express
 - **Frontend**: Archivos estáticos servidos desde `/dist`
 - **Health Check**: `/api/health` - para verificar estado del servidor
-- **DB Health Check**: `/api/db-health` - para verificar conexión a Supabase
+- **DB Health Check**: `/api/db-health` - para verificar conexión a PostgreSQL
 
 ## 📡 API Endpoints
+
+Todas las rutas `/api/*` (salvo las públicas de auth y health) requieren token si la auth está activada.
+
+### Auth y health (públicas)
+- `GET /api/health` - Estado del servidor
+- `GET /api/db-health` - Estado de la conexión a PostgreSQL
+- `GET /api/auth/status` - Indica si la auth está habilitada
+- `POST /api/login` - Login con contraseña; devuelve token
 
 ### Menú
 - `GET /api/menu` - Obtener todos los items
 - `POST /api/menu` - Crear nuevo item
 - `PUT /api/menu/:id` - Actualizar item
+- `PATCH /api/menu/:id/stock` - Actualizar solo el stock
 - `DELETE /api/menu/:id` - Eliminar item
 
 ### Pedidos
 - `GET /api/orders?filter=today|month|active` - Obtener pedidos con filtros server-side
 - `POST /api/orders` - Crear nuevo pedido
-- `PUT /api/orders/:id` - Actualizar pedido
 - `PATCH /api/orders/:id/status` - Cambiar estado
 
 ### Reservas
 - `GET /api/reservations?filter=today|month` - Obtener reservas con filtros server-side
 - `POST /api/reservations` - Crear nueva reserva
 - `PATCH /api/reservations/:id/status` - Cambiar estado
+- `DELETE /api/reservations/:id` - Eliminar reserva
 
 ### Analíticas
 - `GET /api/analytics/sales-by-hour` - Obtener ventas totales desglosadas por hora
@@ -233,17 +268,23 @@ El dashboard usa React Query para cache automático con `staleTime: 30s` e inval
 Cada sección (pedidos, reservas, menú) incluye botones para exportar a PDF y Excel con datos filtrados y nombres de archivo con fecha.
 
 ### Variables de Entorno Soportadas
+- `DATABASE_URL`: Cadena de conexión a PostgreSQL (obligatoria)
 - `PORT`: Puerto del servidor (default: 80 en producción, 8080 en desarrollo)
 - `NODE_ENV`: Entorno (development/production)
-- `VITE_SUPABASE_URL`: URL del proyecto Supabase
-- `VITE_SUPABASE_ANON_KEY`: Clave anónima de Supabase
+- `VITE_SUPABASE_URL`: URL del proyecto Supabase (solo Realtime frontend)
+- `VITE_SUPABASE_ANON_KEY`: Clave anónima de Supabase (solo Realtime frontend)
 - `VITE_API_URL`: URL base de la API (default: `/api`)
+- `DASHBOARD_PASSWORD`: Contraseña de acceso; si está vacía, la auth queda deshabilitada
+- `JWT_SECRET`: Secreto para firmar el token (default: usa `DASHBOARD_PASSWORD`)
+- `TELEGRAM_BOT_TOKEN`: Token del bot para notificaciones (opcional)
+- `TELEGRAM_CHAT_ID`: Chat destino de las notificaciones (opcional)
 
 ## 🐛 Troubleshooting
 
-### Error de conexión a Supabase
-- Verifica que `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` estén configuradas correctamente
-- Confirma que las tablas existan en tu proyecto Supabase
+### Error de conexión a la base de datos
+- Verifica que `DATABASE_URL` sea correcta y la base sea accesible (usa `GET /api/db-health`)
+- Confirma que las tablas `menu`, `orders` y `reservations` existan
+- Para el Realtime del frontend, revisa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
 
 ### Error "Node.js 18 and below are deprecated"
 - Usa Node.js 20 o superior
@@ -252,7 +293,7 @@ Cada sección (pedidos, reservas, menú) incluye botones para exportar a PDF y E
 ### Error `npm ci` en Docker: "Missing from lock file" o módulo no encontrado
 - Si aparece "Cannot find package X" durante el build, verificar que X no sea devDependency importada estáticamente en `vite.config.ts` (ver nota Nixpacks arriba).
 - Si aparece "Missing: esbuild@X.X.X from lock file", el lockfile está desincronizado con las peer deps. Verificar `.npmrc` tiene `legacy-peer-deps=true`.
-- Módulos con compilación nativa (sqlite3, pg, etc.) fallan en Docker si no se usan: eliminarlos de `package.json`.
+- `pg` es el driver principal de la base de datos: NO lo elimines de `package.json`. Solo aplica a módulos nativos realmente no usados (p. ej. `sqlite3`).
 
 ### Error "Cannot GET /"
 - Asegúrate de haber ejecutado `npm run build` para generar la carpeta `/dist`
